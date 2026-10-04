@@ -24,8 +24,12 @@ jobs:
             sed -i "s#<application#<uses-permission android:name=\"android.permission.$p\" />\n<application#" android/app/src/main/AndroidManifest.xml
           done
       - run: npx cap sync android
+      - name: Ikonka
+        run: |
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          for f in $(find android/app/src/main/res -name 'ic_launcher*.png'); do cp icon-512.png "$f"; done
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: mxx-apk
+          name: mxx
           path: android/app/build/outputs/apk/debug/app-debug.apk
