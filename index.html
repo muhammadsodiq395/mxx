@@ -582,6 +582,10 @@ aside.kb #nav,aside.kb .fab{display:none}
 aside .top,aside #nav{background:var(--sf)}
 .row{background:transparent}
 
+#amok{bottom:calc(18px + var(--kb,0px) + env(safe-area-inset-bottom,0px))!important;transition:bottom .18s ease}
+.aml{padding-bottom:calc(110px + var(--kb,0px))!important}
+.mrow.mem{cursor:default;opacity:.65}.mrow.mem .ckb{display:grid;background:var(--mut)}.mrow.mem:hover{background:transparent}
+.mrow small,.row small{font-size:14px}.mrow small .u2,.row small .u2,.u2{font-size:12.5px;color:var(--ac)}
 </style>
 </head>
 <body>
@@ -790,12 +794,12 @@ function renderList(){
  selUI();
  const f=$('#q').value.trim().toLowerCase();let tot=0;
  const flt=c=>TAB==='all'||(TAB==='unread'?unr(c)>0:TAB==='pin'?PIN.includes(c.id):c.type===TAB);
- const cs=CH.filter(c=>flt(c)&&info(c).name.toLowerCase().includes(f)).sort((a,b)=>(PIN.includes(b.id)-PIN.includes(a.id))||ts(b)-ts(a));
+ const cs=CH.filter(c=>flt(c)&&(info(c).name.toLowerCase().includes(f)||(f.replace(/^@/,'')&&(info(c).username||'').toLowerCase().includes(f.replace(/^@/,''))))).sort((a,b)=>(PIN.includes(b.id)-PIN.includes(a.id))||ts(b)-ts(a));
  CH.forEach(c=>{tot+=unr(c)});
  document.querySelectorAll('#ct button').forEach(b=>{const t=b.dataset.t,n=CH.filter(c=>unr(c)>0&&(t==='all'||t==='unread'||(t==='pin'?PIN.includes(c.id):c.type===t))).length;b.querySelector('.tb').textContent=t==='pin'?'':n||''});
  $('#list').innerHTML=cs.length?cs.map(c=>{const i=info(c),n=unr(c),t=ts(c),dr=c.id!==cur&&DR[c.id]?DR[c.id].trim():'';
   const ic=c.type==='group'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i> ':c.type==='channel'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-mega></use></svg></i> ':'';
-  return`<button class="row${c.id===cur?' sel':''}${SEL.has(c.id)?' chk':''}" data-id="${c.id}"><span class="aw">${av(i,56,c.type==='dm'&&online(i))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${ic}<span>${esc(i.name)}</span></b><small>${dr?`<span class="dr">Qoralama:</span> ${esc(dr.slice(0,60))}`:c.last?esc((c.lfrom===U&&c.type!=='channel'?'Siz: ':'')+c.last):'Xabarlar yo‘q'}</small></span><span class="rt">${t?hm(t):''}${n?`<span class="bd${MUTE.includes(c.id)?' m':''}">${n}</span>`:''}${PIN.includes(c.id)?'<span><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></span>':''}</span></button>`}).join(''):'<div class="emp" style="margin:20px auto">Chat topilmadi.<br>Do‘stingizni topish uchun <svg class=sic-sm aria-hidden=true><use href=#i-chat></use></svg>ni bosing.</div>';
+  return`<button class="row${c.id===cur?' sel':''}${SEL.has(c.id)?' chk':''}" data-id="${c.id}"><span class="aw">${av(i,56,c.type==='dm'&&online(i))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${ic}<span>${esc(i.name)}</span></b><small>${f&&i.username?'<span class="u2">@'+esc(i.username)+'</span>':dr?`<span class="dr">Qoralama:</span> ${esc(dr.slice(0,60))}`:c.last?esc((c.lfrom===U&&c.type!=='channel'?'Siz: ':'')+c.last):'Xabarlar yo‘q'}</small></span><span class="rt">${t?hm(t):''}${n?`<span class="bd${MUTE.includes(c.id)?' m':''}">${n}</span>`:''}${PIN.includes(c.id)?'<span><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></span>':''}</span></button>`}).join(''):'<div class="emp" style="margin:20px auto">Chat topilmadi.<br>Do‘stingizni topish uchun <svg class=sic-sm aria-hidden=true><use href=#i-chat></use></svg>ni bosing.</div>';
  document.title=tot?`(${tot}) MXX Messenger`:'MXX Messenger';updNav(tot);renderStories();{const L=$('#list');if(L.scrollHeight-L.clientHeight<60)$('aside').classList.remove('col')}
 }
 // ===== Chatlarni tanlash (2 soniya bosib turing) =====
@@ -1159,20 +1163,24 @@ function addMember(c){
  AMC=c.id;AMS=new Map();AMG=[];AMD=true;AMK++;
  const v=$('#amv');v.hidden=false;
  v.innerHTML=`<div class="amh"><button class="ib" data-am="back" aria-label="Orqaga"><svg class=sic aria-hidden=true><use href=#i-left></use></svg></button><b>${c.type==='group'?'A’zolar':'Obunachilar'} qo‘shish</b></div><div class="amc" id="amc"></div><div class="fi amq"><span class="ic"><svg class=sic aria-hidden=true><use href=#i-search></use></svg></span><input id="amq" autocapitalize="none" autocomplete="off" placeholder="Odamlarni qidirish..."></div><div class="aml" id="aml"></div><button type="button" id="amok" aria-label="Qo‘shish" hidden><svg class=sic aria-hidden=true><use href=#i-check></use></svg></button>`;
- $('#amq').oninput=amSearch;amDraw();$('#amq').focus()}
+ $('#amq').oninput=amSearch;amDraw();$('#amq').focus();
+ const pre=[...new Set([...CH.filter(z=>z.type==='dm').map(z=>peer(z)),...CH.flatMap(z=>z.members)])].filter(id=>id&&id!==U&&(!UC[id]||UC[id].name==='...')).slice(0,120);
+ Promise.all(pre.map(id=>db.doc('users/'+id).get().then(d=>{if(d.exists)UC[id]=d.data()}).catch(()=>{}))).then(()=>{if(AMC===c.id)amDraw()})}
 function closeAM(){AMC=null;AMS=new Map();AMG=[];clearTimeout(AMT);AMK++;const v=$('#amv');if(v){v.hidden=true;v.innerHTML=''}}
 function amLocal(q){
  const c=CH.find(x=>x.id===AMC);if(!c)return[];const seen=new Set();
- return CH.filter(z=>z.type==='dm').sort((a,b)=>ts(b)-ts(a)).map(z=>peer(z)).filter(id=>id&&id!==U&&!c.members.includes(id)&&!seen.has(id)&&seen.add(id))
-  .map(id=>({id,u:who(id)})).filter(o=>!q||(o.u.name||'').toLowerCase().includes(q)||(o.u.username||'').toLowerCase().includes(q))}
+ const dms=CH.filter(z=>z.type==='dm').sort((a,b)=>ts(b)-ts(a)).map(z=>peer(z));
+ const oth=q?CH.filter(z=>z.type!=='dm').flatMap(z=>z.members).slice(0,300):[];
+ return[...dms,...oth].filter(id=>id&&id!==U&&(q||!c.members.includes(id))&&!seen.has(id)&&seen.add(id))
+  .map(id=>({id,u:who(id),m:c.members.includes(id)})).filter(o=>!q||(o.u.name||'').toLowerCase().includes(q)||(o.u.username||'').toLowerCase().includes(q)).sort((a,b)=>a.m-b.m)}
 function amDraw(){
  const c=CH.find(x=>x.id===AMC);if(!c||!$('#amq'))return closeAM();
  const q=norm($('#amq').value),loc=amLocal(q),ids=new Set(loc.map(o=>o.id));
- const glob=AMG.filter(o=>!ids.has(o.id)&&!c.members.includes(o.id));
- const row=(id,u,sub,cls)=>`<button type="button" class="mrow${AMS.has(id)?' chk':''}" data-am="${id}"><span class="aw">${av(u,46,online(u))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${esc(u.name||'...')}</b><small${cls?` class="${cls}"`:''}>${sub}</small></span></button>`;
+ const glob=AMG.filter(o=>!ids.has(o.id)).sort((a,b)=>a.m-b.m);
+ const row=(id,u,sub,cls,m)=>m?`<div class="mrow mem"><span class="aw">${av(u,46,online(u))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${esc(u.name||'...')}</b><small>${c.type==='group'?'Guruhda':'Kanalda'}</small></span></div>`:`<button type="button" class="mrow${AMS.has(id)?' chk':''}" data-am="${id}"><span class="aw">${av(u,46,online(u))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${esc(u.name||'...')}</b><small${cls?` class="${cls}"`:''}>${sub}</small></span></button>`;
  $('#amc').innerHTML=[...AMS].map(([id,u])=>`<button type="button" class="chip" data-r="${id}">${av(u,40)}<span>${esc(u.name)}</span></button>`).join('');
- $('#aml').innerHTML=loc.map(o=>row(o.id,o.u,esc(seenTxt(o.u)),online(o.u)?'ol':'')).join('')
-  +(glob.length?'<div class="amg">Global qidiruv</div>'+glob.map(o=>row(o.id,o.u,'@'+esc(o.un),'ol')).join(''):'')
+ $('#aml').innerHTML=loc.map(o=>row(o.id,o.u,o.u.username?'<span class="u2">@'+esc(o.u.username)+'</span>':esc(seenTxt(o.u)),o.u.username?'':online(o.u)?'ol':'',o.m)).join('')
+  +(glob.length?'<div class="amg">Global qidiruv</div>'+glob.map(o=>row(o.id,o.u,'<span class="u2">@'+esc(o.un)+'</span>','',o.m)).join(''):'')
   ||(q&&AMD?'<div class="none">Hech kim topilmadi</div>':!q?'<div class="none">Kontaktlar yo‘q. @username yozib qidiring.</div>':'');
  $('#amok').hidden=!AMS.size}
 function amSearch(){
@@ -1182,11 +1190,16 @@ function amSearch(){
  AMT=setTimeout(async()=>{
   try{
    const c=CH.find(x=>x.id===AMC);if(!c)return;
-   const sn=await db.collection('usernames').where(FP,'>=',q).where(FP,'<=',q+'\uf8ff').limit(10).get();
-   const out=await Promise.all(sn.docs.map(async d=>{const x=d.data();if(x.type!=='user'||x.uid===U||c.members.includes(x.uid))return null;
-    const u=(await db.doc('users/'+x.uid).get()).data();if(!u)return null;UC[x.uid]=u;return{id:x.uid,u,un:d.id}}));
-   if(k!==AMK)return;AMG=out.filter(Boolean)
-  }catch(e){if(k!==AMK)return}
+   const [sn,us]=await Promise.all([
+    db.collection('usernames').where(FP,'>=',q).where(FP,'<=',q+'\uf8ff').limit(10).get(),
+    db.collection('users').where('username','>=',q).where('username','<=',q+'\uf8ff').limit(10).get().catch(()=>null)]);
+   const mp=new Map();
+   if(us)us.docs.forEach(d=>{const u=d.data();if(u&&u.username)mp.set(d.id,{id:d.id,u,un:u.username})});
+   await Promise.all(sn.docs.map(async d=>{const x=d.data();if(x.type!=='user'||mp.has(x.uid))return;
+    const u=(await db.doc('users/'+x.uid).get()).data();if(u)mp.set(x.uid,{id:x.uid,u,un:d.id})}));
+   if(k!==AMK)return;
+   AMG=[...mp.values()].filter(o=>o.id!==U).map(o=>({...o,m:c.members.includes(o.id)}));AMG.forEach(o=>{UC[o.id]=o.u})
+  }catch(e){if(k!==AMK)return;toast('Qidirib bo‘lmadi: '+(e.code||e.message))}
   AMD=true;amDraw()},300)}
 async function amSave(){
  const ids=[...AMS.keys()];if(!ids.length||!AMC)return;const b=$('#amok');b.disabled=true;
@@ -1476,6 +1489,9 @@ function upSet(u){const e=document.querySelector(`[data-up="${u.id}"]`);if(!e)re
 function upCancel(id){const u=UP.find(x=>x.id===id);if(!u||u.sending)return;u.cancel=1;upDel(u)}
 function upAppend(m){const L=UP.filter(u=>u.cid===cur&&!(u.mid&&M.some(x=>x.id===u.mid)));if(!L.length)return;const e=m.querySelector('.emp');if(e)e.remove();m.insertAdjacentHTML('beforeend',L.map(upHtml).join(''))}
 // ===== v3: klaviatura ochilganda pastki menyu yashirinadi =====
+(()=>{const vv=window.visualViewport,R=document.documentElement;
+ const set=()=>{let k=vv?Math.round(innerHeight-vv.height-vv.offsetTop):0;if(k<90)k=0;R.style.setProperty('--kb',k+'px')};
+ if(vv){vv.addEventListener('resize',set);vv.addEventListener('scroll',set)}addEventListener('focusout',()=>setTimeout(set,120));set()})();
 {const A=$('aside');A.addEventListener('focusin',e=>{if(e.target.matches('input,textarea'))A.classList.add('kb')});A.addEventListener('focusout',()=>A.classList.remove('kb'))}
 // ===== v3: kanalda "Sukut qilish" =====
 $('#mt').onclick=()=>{const c=CH.find(x=>x.id===cur);if(!c)return;toast(muteTog(c.id)?'Ovozsiz qilindi':'Ovoz yoqildi');head(c)};
