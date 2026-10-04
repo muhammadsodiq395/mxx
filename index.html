@@ -586,6 +586,7 @@ aside .top,aside #nav{background:var(--sf)}
 .aml{padding-bottom:calc(110px + var(--kb,0px))!important}
 .mrow.mem{cursor:default;opacity:.65}.mrow.mem .ckb{display:grid;background:var(--mut)}.mrow.mem:hover{background:transparent}
 .mrow small,.row small{font-size:14px}.mrow small .u2,.row small .u2,.u2{font-size:12.5px;color:var(--ac)}
+.mrow,.chip,.row,.fwb{touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -1173,15 +1174,16 @@ function amLocal(q){
  const oth=q?CH.filter(z=>z.type!=='dm').flatMap(z=>z.members).slice(0,300):[];
  return[...dms,...oth].filter(id=>id&&id!==U&&(q||!c.members.includes(id))&&!seen.has(id)&&seen.add(id))
   .map(id=>({id,u:who(id),m:c.members.includes(id)})).filter(o=>!q||(o.u.name||'').toLowerCase().includes(q)||(o.u.username||'').toLowerCase().includes(q)).sort((a,b)=>a.m-b.m)}
+function amPut(e,h){if(e&&e._h!==h){e._h=h;e.innerHTML=h}}
 function amDraw(){
  const c=CH.find(x=>x.id===AMC);if(!c||!$('#amq'))return closeAM();
  const q=norm($('#amq').value),loc=amLocal(q),ids=new Set(loc.map(o=>o.id));
  const glob=AMG.filter(o=>!ids.has(o.id)).sort((a,b)=>a.m-b.m);
  const row=(id,u,sub,cls,m)=>m?`<div class="mrow mem"><span class="aw">${av(u,46,online(u))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${esc(u.name||'...')}</b><small>${c.type==='group'?'Guruhda':'Kanalda'}</small></span></div>`:`<button type="button" class="mrow${AMS.has(id)?' chk':''}" data-am="${id}"><span class="aw">${av(u,46,online(u))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${esc(u.name||'...')}</b><small${cls?` class="${cls}"`:''}>${sub}</small></span></button>`;
- $('#amc').innerHTML=[...AMS].map(([id,u])=>`<button type="button" class="chip" data-r="${id}">${av(u,40)}<span>${esc(u.name)}</span></button>`).join('');
- $('#aml').innerHTML=loc.map(o=>row(o.id,o.u,o.u.username?'<span class="u2">@'+esc(o.u.username)+'</span>':esc(seenTxt(o.u)),o.u.username?'':online(o.u)?'ol':'',o.m)).join('')
+ amPut($('#amc'),[...AMS].map(([id,u])=>`<button type="button" class="chip" data-r="${id}">${av(u,40)}<span>${esc(u.name)}</span></button>`).join(''));
+ amPut($('#aml'),loc.map(o=>row(o.id,o.u,o.u.username?'<span class="u2">@'+esc(o.u.username)+'</span>':esc(seenTxt(o.u)),o.u.username?'':online(o.u)?'ol':'',o.m)).join('')
   +(glob.length?'<div class="amg">Global qidiruv</div>'+glob.map(o=>row(o.id,o.u,'<span class="u2">@'+esc(o.un)+'</span>','',o.m)).join(''):'')
-  ||(q&&AMD?'<div class="none">Hech kim topilmadi</div>':!q?'<div class="none">Kontaktlar yo‘q. @username yozib qidiring.</div>':'');
+  ||(q&&AMD?'<div class="none">Hech kim topilmadi</div>':!q?'<div class="none">Kontaktlar yo‘q. @username yozib qidiring.</div>':''));
  $('#amok').hidden=!AMS.size}
 function amSearch(){
  clearTimeout(AMT);const q=norm($('#amq').value),k=++AMK;AMG=[];
