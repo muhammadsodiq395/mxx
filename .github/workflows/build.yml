@@ -1,0 +1,31 @@
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Web fayllarni tayyorlash
+        run: |
+          mkdir www
+          rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' --exclude='www' --exclude='package*.json' --exclude='capacitor.config.json' ./ www/
+      - run: npm install
+      - run: npx cap add android
+      - name: Ruxsatlar
+        run: |
+          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA READ_MEDIA_IMAGES READ_MEDIA_VIDEO; do
+            sed -i "s#<application#<uses-permission android:name=\"android.permission.$p\" />\n<application#" android/app/src/main/AndroidManifest.xml
+          done
+      - run: npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mxx-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
