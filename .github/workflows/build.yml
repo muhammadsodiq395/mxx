@@ -26,10 +26,19 @@ jobs:
       - run: npx cap sync android
       - name: Ikonka
         run: |
-          rm -rf android/app/src/main/res/mipmap-anydpi-v26
-          for f in $(find android/app/src/main/res -name 'ic_launcher*.png'); do cp icon-512.png "$f"; done
+          sudo apt-get install -y imagemagick
+          R=android/app/src/main/res
+          convert icon-512.png -fuzz 8% -trim +repage sq.png
+          sed -i 's/#FFFFFF/#2D9CF0/I' $R/values/ic_launcher_background.xml
+          for e in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432; do
+            IFS=: read n a f <<< "$e"
+            s=$((f*64/100))
+            convert sq.png -resize ${a}x${a} -background '#2D9CF0' -gravity center -extent ${a}x${a} $R/mipmap-$n/ic_launcher.png
+            convert sq.png -resize ${a}x${a} -background '#2D9CF0' -gravity center -extent ${a}x${a} $R/mipmap-$n/ic_launcher_round.png
+            convert sq.png -resize ${s}x${s} -background none -gravity center -extent ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
+          done
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: mxx
+          name: mxx-app
           path: android/app/build/outputs/apk/debug/app-debug.apk
