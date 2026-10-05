@@ -17,10 +17,14 @@ jobs:
           mkdir www
           rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' --exclude='www' --exclude='package*.json' --exclude='capacitor.config.json' ./ www/
       - run: npm install
+      - name: Pluginlar (orqaga tugmasi va bildirishnoma)
+        run: |
+          V=$(node -p "require('@capacitor/core/package.json').version.split('.')[0]")
+          npm install @capacitor/app@$V @capacitor/local-notifications@$V
       - run: npx cap add android
       - name: Ruxsatlar
         run: |
-          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA READ_MEDIA_IMAGES READ_MEDIA_VIDEO; do
+          for p in RECORD_AUDIO MODIFY_AUDIO_SETTINGS CAMERA READ_MEDIA_IMAGES READ_MEDIA_VIDEO POST_NOTIFICATIONS; do
             sed -i "s#<application#<uses-permission android:name=\"android.permission.$p\" />\n<application#" android/app/src/main/AndroidManifest.xml
           done
       - run: npx cap sync android
@@ -58,3 +62,4 @@ jobs:
         with:
           name: mxx-app
           path: mxx-release.apk
+          
