@@ -32,14 +32,13 @@ jobs:
         run: |
           sudo apt-get install -y imagemagick
           R=android/app/src/main/res
-          convert icon-512.png -fuzz 8% -trim +repage sq.png
-          sed -i 's/#FFFFFF/#2D9CF0/I' $R/values/ic_launcher_background.xml
+          cp icon-512-maskable.png sq.png
+          sed -i 's/#FFFFFF/#080C28/I' $R/values/ic_launcher_background.xml
           for e in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432; do
             IFS=: read n a f <<< "$e"
-            s=$((f*64/100))
-            convert sq.png -resize ${a}x${a} -background '#2D9CF0' -gravity center -extent ${a}x${a} $R/mipmap-$n/ic_launcher.png
-            convert sq.png -resize ${a}x${a} -background '#2D9CF0' -gravity center -extent ${a}x${a} $R/mipmap-$n/ic_launcher_round.png
-            convert sq.png -resize ${s}x${s} -background none -gravity center -extent ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
+            convert sq.png -resize ${a}x${a} $R/mipmap-$n/ic_launcher.png
+            convert sq.png -resize ${a}x${a} $R/mipmap-$n/ic_launcher_round.png
+            convert sq.png -resize ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
           done
       - name: Versiya raqami
         run: sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
