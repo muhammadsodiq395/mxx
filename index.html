@@ -587,6 +587,13 @@ aside .top,aside #nav{background:var(--sf)}
 .mrow.mem{cursor:default;opacity:.65}.mrow.mem .ckb{display:grid;background:var(--mut)}.mrow.mem:hover{background:transparent}
 .mrow small,.row small{font-size:14px}.mrow small .u2,.row small .u2,.u2{font-size:12.5px;color:var(--ac)}
 .mrow,.chip,.row,.fwb{touch-action:manipulation}
+
+#lg{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column}#lg[hidden]{display:none}
+.lgh{display:flex;gap:8px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 10px 8px}
+#lgq{flex:1;height:44px;border:0;border-radius:22px;background:var(--in);color:var(--ink);padding:0 16px;font-size:16px;outline:0}
+#lgl{flex:1;overflow:auto}.lgr{display:flex;align-items:center;width:100%;padding:12px 18px;border:0;background:transparent;color:var(--ink);text-align:left;gap:12px;font:inherit;font-size:16px}
+.lgr small{display:block;color:var(--mut);font-size:13px}.lgr .ck{margin-left:auto;color:var(--ac);font-size:20px}
+#sdn{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;width:46px;height:46px;border-radius:50%;border:0;background:var(--sf);color:var(--mut);box-shadow:var(--sh);display:grid;place-items:center}#sdn[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -614,16 +621,9 @@ aside .top,aside #nav{background:var(--sf)}
 <div id="app" hidden>
 <aside>
  <div class="top" id="top"><button class="ib" id="mb" aria-label="Menyu"><svg class=sic aria-hidden=true><use href=#i-menu></use></svg></button><h1>MXX Messenger</h1><div id="mini"></div><button class="ib" id="nb" aria-label="Qidirish"><svg class=sic aria-hidden=true><use href=#i-search></use></svg></button><button class="ib" id="kb" aria-label="Ko‘proq"><svg class=sic aria-hidden=true><use href=#i-more></use></svg></button></div>
- <div class="sbar" id="lsel" hidden><button class="ib" id="lx" aria-label="Bekor qilish"><svg class=sic aria-hidden=true><use href=#i-x></use></svg></button><b id="lcn"></b><button class="ib" id="lrd" aria-label="O‘qildi"><svg class=sic aria-hidden=true><use href=#i-check2></use></svg></button><button class="ib" id="lpin" aria-label="Mahkamlash"><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></button><button class="ib" id="lmut" aria-label="Ovoz"><svg class=sic aria-hidden=true><use href=#i-belloff></use></svg></button><button class="ib dg" id="ldel" aria-label="O‘chirish"><svg class=sic aria-hidden=true><use href=#i-trash></use></svg></button></div>
+ <div class="sbar" id="lsel" hidden><button class="ib" id="lx" aria-label="Bekor qilish"><svg class=sic aria-hidden=true><use href=#i-x></use></svg></button><b id="lcn"></b><button class="ib" id="lrd" aria-label="O‘qildi"><svg class=sic aria-hidden=true><use href=#i-check2></use></svg></button><button class="ib" id="lpin" aria-label="Mahkamlash"><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></button><button class="ib" id="lmut" aria-label="Ovoz"><svg class=sic aria-hidden=true><use href=#i-belloff></use></svg></button><button class="ib" id="lmore" aria-label="Yana"><svg class=sic aria-hidden=true><use href=#i-more></use></svg></button><button class="ib dg" id="ldel" aria-label="O‘chirish"><svg class=sic aria-hidden=true><use href=#i-trash></use></svg></button></div>
  <div id="menu" class="pp" hidden>
-  <button data-a="profile"><svg class=sic-sm aria-hidden=true><use href=#i-user></use></svg>Profilim</button>
-  <button data-a="find"><svg class=sic-sm aria-hidden=true><use href=#i-search></use></svg>Qidirish</button>
-  <button data-a="group"><svg class=sic-sm aria-hidden=true><use href=#i-users></use></svg>Yangi guruh</button>
-  <button data-a="channel"><svg class=sic-sm aria-hidden=true><use href=#i-mega></use></svg>Yangi kanal</button>
-  <button data-a="addacc"><svg class=sic-sm aria-hidden=true><use href=#i-plus></use></svg>Hisob qo‘shish</button>
-  <button data-a="notif"><svg class=sic-sm aria-hidden=true><use href=#i-bell></use></svg>Bildirishnomalar</button>
   <button data-a="theme"><svg class=sic-sm aria-hidden=true><use href=#i-moon></use></svg>Mavzuni almashtirish</button>
-  <button data-a="logout" class="dg"><svg class=sic-sm aria-hidden=true><use href=#i-logout></use></svg>Chiqish</button>
  </div>
  <div id="chv">
   <div id="stories"></div>
@@ -664,6 +664,9 @@ aside .top,aside #nav{background:var(--sf)}
 </main>
 <div id="info" hidden></div>
 <div id="sv" hidden></div>
+<div id="lg" hidden></div>
+<div id="xm" class="pp" hidden style="position:fixed;top:calc(56px + env(safe-area-inset-top));right:10px;left:auto;z-index:90"></div>
+<input type="file" id="wpf" accept="image/*" hidden>
 <div id="amv" hidden></div>
 <div id="upf" hidden></div>
 <div id="mp" hidden></div>
@@ -694,6 +697,8 @@ const okUn=u=>/^[a-z0-9_]{3,20}$/.test(u);
 let U=null,ME=null,CH=[],M=[],cur=null,UC={},subs=[],unsubM=null,unsubP=null,mode='in',inited=false,lastN={},TH=localStorage.getItem('mxx.th')||(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'),hb=null,TAB='all',REPLY=null,EDIT=null,lastType=0,REG=false,MUTE=[],PIN=[],DR={},SEL=new Set(),SELM=new Set(),LPF=0,LPT='mouse',INFO=null,ITAB='m';
 try{MUTE=JSON.parse(localStorage.getItem('mxx.mute')||'[]')}catch(e){}
 try{PIN=JSON.parse(localStorage.getItem('mxx.pin')||'[]')}catch(e){}
+var FAV=[];try{FAV=JSON.parse(localStorage.getItem('mxx.fav')||'[]')}catch(e){}
+var STK=0;
 // 2 soniya bosib turish (Telegram kabi tanlash rejimi)
 function lp(el,sel,fn){
  let t,sx,sy,fired=false;
@@ -774,6 +779,7 @@ function authH(u){
   renderList();if(INFO)renderInfo()
  },()=>toast('Serverga ulanib bo‘lmadi')));
  beat();hb=setInterval(beat,60000);
+ {const LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;if(LN)LN.requestPermissions().catch(()=>{})}
  if(window.Notification&&Notification.permission==='default')document.addEventListener('click',()=>Notification.requestPermission(),{once:true})
 }
 let unAuth=au.onAuthStateChanged(authH);
@@ -784,6 +790,8 @@ function markRead(c){db.doc('chats/'+c.id).update({['reads.'+U]:FV.serverTimesta
 function ping(){try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.08,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.25);o.start();o.stop(a.currentTime+.25)}catch(e){}}
 async function notify(t,b){
  ping();
+ const LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+ if(LN&&document.hidden){try{await LN.schedule({notifications:[{id:Math.floor(Math.random()*2e9),title:t,body:b||''}]});return}catch(e){}}
  if(document.hidden&&window.Notification&&Notification.permission==='granted'){
   try{const r=await navigator.serviceWorker?.getRegistration();if(r)r.showNotification(t,{body:b});else new Notification(t,{body:b})}catch(e){}
  }else toast(t+': '+b)
@@ -794,10 +802,10 @@ function renderList(){
  for(const id of [...SEL])if(!CH.find(c=>c.id===id))SEL.delete(id);
  selUI();
  const f=$('#q').value.trim().toLowerCase();let tot=0;
- const flt=c=>TAB==='all'||(TAB==='unread'?unr(c)>0:TAB==='pin'?PIN.includes(c.id):c.type===TAB);
+ const flt=c=>TAB==='all'||(TAB==='unread'?unr(c)>0:TAB==='pin'?FAV.includes(c.id):c.type===TAB);
  const cs=CH.filter(c=>flt(c)&&(info(c).name.toLowerCase().includes(f)||(f.replace(/^@/,'')&&(info(c).username||'').toLowerCase().includes(f.replace(/^@/,''))))).sort((a,b)=>(PIN.includes(b.id)-PIN.includes(a.id))||ts(b)-ts(a));
  CH.forEach(c=>{tot+=unr(c)});
- document.querySelectorAll('#ct button').forEach(b=>{const t=b.dataset.t,n=CH.filter(c=>unr(c)>0&&(t==='all'||t==='unread'||(t==='pin'?PIN.includes(c.id):c.type===t))).length;b.querySelector('.tb').textContent=t==='pin'?'':n||''});
+ document.querySelectorAll('#ct button').forEach(b=>{const t=b.dataset.t,n=CH.filter(c=>unr(c)>0&&(t==='all'||t==='unread'||(t==='pin'?FAV.includes(c.id):c.type===t))).length;b.querySelector('.tb').textContent=t==='pin'?'':n||''});
  $('#list').innerHTML=cs.length?cs.map(c=>{const i=info(c),n=unr(c),t=ts(c),dr=c.id!==cur&&DR[c.id]?DR[c.id].trim():'';
   const ic=c.type==='group'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i> ':c.type==='channel'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-mega></use></svg></i> ':'';
   return`<button class="row${c.id===cur?' sel':''}${SEL.has(c.id)?' chk':''}" data-id="${c.id}"><span class="aw">${av(i,56,c.type==='dm'&&online(i))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${ic}<span>${esc(i.name)}</span></b><small>${f&&i.username?'<span class="u2">@'+esc(i.username)+'</span>':dr?`<span class="dr">Qoralama:</span> ${esc(dr.slice(0,60))}`:c.last?esc((c.lfrom===U&&c.type!=='channel'?'Siz: ':'')+c.last):'Xabarlar yo‘q'}</small></span><span class="rt">${t?hm(t):''}${n?`<span class="bd${MUTE.includes(c.id)?' m':''}">${n}</span>`:''}${PIN.includes(c.id)?'<span><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></span>':''}</span></button>`}).join(''):'<div class="emp" style="margin:20px auto">Chat topilmadi.<br>Do‘stingizni topish uchun <svg class=sic-sm aria-hidden=true><use href=#i-chat></use></svg>ni bosing.</div>';
@@ -847,8 +855,8 @@ function open(id){
  if(cur&&!EDIT)DR[cur]=$('#ci').value;
  closeInfo();cur=id;csReset();REPLY=EDIT=null;SELM.clear();msgSelUI();$('#ci').value=DR[id]||'';bar();head(c);if(unr(c)>0)markRead(c);
  $('#app').classList.add('open');$('#hd').hidden=false;$('#cf').hidden=false;$('#emo').hidden=true;
- if(unsubM)unsubM();if(unsubP)unsubP();unsubP=null;M=[];renderMsgs(1);
- unsubM=db.collection('chats/'+id+'/msgs').orderBy('ts').limitToLast(200).onSnapshot(s=>{if(cur!==id)return;M=s.docs.map(d=>({id:d.id,...d.data()}));renderMsgs()},()=>toast('Xabarlarni o‘qib bo‘lmadi'));
+ if(unsubM)unsubM();if(unsubP)unsubP();unsubP=null;M=[];STK=Date.now()+1800;renderMsgs(1);
+ unsubM=db.collection('chats/'+id+'/msgs').orderBy('ts').limitToLast(200).onSnapshot(s=>{if(cur!==id)return;const f0=!M.length;M=s.docs.map(d=>({id:d.id,...d.data()}));renderMsgs(f0);if(f0)[80,350,900].forEach(d=>setTimeout(()=>{if(cur===id){const m=$('#msgs');m.scrollTop=m.scrollHeight}},d))},()=>toast('Xabarlarni o‘qib bo‘lmadi'));
  if(c.type==='dm'){const p=peer(c);unsubP=db.doc('users/'+p).onSnapshot(s=>{if(s.exists){UC[p]=s.data();const z=CH.find(x=>x.id===cur);if(z)head(z);renderList();if(INFO)renderInfo()}})}
  renderList();onlPoll(id);if(innerWidth>800&&!$('#ci').disabled)$('#ci').focus()
 }
@@ -865,7 +873,7 @@ $('#hsr').onclick=()=>{const b=$('#csb');b.hidden=!b.hidden;if(b.hidden){CQ='';$
 $('#csq').oninput=()=>{CQ=$('#csq').value.trim().toLowerCase();renderMsgs()};
 function openSoon(id,n=0){if(CH.find(x=>x.id===id))open(id);else if(n<20)setTimeout(()=>openSoon(id,n+1),250)}
 // ===== Xabarlar =====
-function renderMsgs(stick){
+function renderMsgs(stick){wpApply();
  const c=CH.find(x=>x.id===cur),m=$('#msgs');if(!c)return;
  for(const id of [...SELM])if(!M.some(z=>z.id===id))SELM.delete(id);
  msgSelUI();
@@ -1340,7 +1348,7 @@ function renderPage(){
   const ps=CH.filter(c=>c.type==='dm').map(c=>({c,u:who(peer(c))})).sort((a,b)=>(a.u.name||'').localeCompare(b.u.name||''));
   p.innerHTML=`<div class="card" style="margin-top:8px"><button class="il" data-s="find"><i><svg class=sic aria-hidden=true><use href=#i-search></use></svg></i><span>Foydalanuvchi qidirish<small>@username bo‘yicha</small></span></button></div><div class="card">${ps.map(({c,u})=>`<button class="mrow" data-c="${c.id}">${av(u,46,online(u))}<span class="m"><b>${esc(u.name)}</b><small class="${online(u)?'ol':''}">${esc(seenTxt(u))}</small></span></button>`).join('')||'<div class="none">Hali kontakt yo‘q</div>'}</div>`
  }else if(VIEW==='settings'){
-  p.innerHTML=`<div class="card" style="margin-top:8px"><button class="il" data-s="theme"><i><svg class=sic aria-hidden=true><use href=#i-palette></use></svg></i><span>Mavzu<small>${TH==='dark'?'Qorong‘i':'Yorug‘'}</small></span></button><button class="il" data-s="notif"><i><svg class=sic aria-hidden=true><use href=#i-bell></use></svg></i><span>Bildirishnomalar</span></button><button class="il" data-s="accs"><i><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i><span>Hisoblar<small>${ACCS.length}/10</small></span></button><button class="il" data-s="add"><i><svg class=sic aria-hidden=true><use href=#i-plus></use></svg></i><span>Hisob qo‘shish</span></button></div>
+  p.innerHTML=`<div class="card" style="margin-top:8px"><button class="il" data-s="lang"><i><svg class=sic aria-hidden=true viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></i><span>Til<small>${LNM()}</small></span></button><button class="il" data-s="theme"><i><svg class=sic aria-hidden=true><use href=#i-palette></use></svg></i><span>Mavzu<small>${TH==='dark'?'Qorong‘i':'Yorug‘'}</small></span></button><button class="il" data-s="notif"><i><svg class=sic aria-hidden=true><use href=#i-bell></use></svg></i><span>Bildirishnomalar</span></button><button class="il" data-s="accs"><i><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i><span>Hisoblar<small>${ACCS.length}/10</small></span></button><button class="il" data-s="add"><i><svg class=sic aria-hidden=true><use href=#i-plus></use></svg></i><span>Hisob qo‘shish</span></button></div>
   <div class="card"><div class="il"><i><svg class=sic aria-hidden=true><use href=#i-dl></use></svg></i><span>Galereyaga saqlash<small>Rasm/videoni oching yoki xabarni bosib turing → “Galereyaga saqlash”</small></span></div></div>
   <div class="card"><button class="il dg" data-s="logout"><i><svg class=sic aria-hidden=true><use href=#i-logout></use></svg></i><span>Hisobdan chiqish</span></button></div>`
  }else{
@@ -1352,7 +1360,7 @@ function renderPage(){
 $('#pg').onclick=e=>{const b=e.target.closest('[data-s],[data-c]');if(!b)return;if(b.dataset.c)return open(b.dataset.c);
  const s=b.dataset.s;
  if(s==='find')find();else if(s==='photo')pickPhoto();else if(s==='edit')profile();else if(s==='settings')setView('settings');
- else if(s==='theme'){togTheme();renderPage()}else if(s==='notif')askNotif();else if(s==='accs')accsModal();else if(s==='add')addAcc();
+ else if(s==='lang')langPage();else if(s==='theme'){togTheme();renderPage()}else if(s==='notif')askNotif();else if(s==='accs')accsModal();else if(s==='add')addAcc();
  else if(s==='logout'){if(confirm('Hisobdan chiqasizmi?'))doLogout()}else if(s==='ava'&&ME?.img)viewMedia('i',ME.img,'mxx_profil.jpg')};
 // ===== Video yuborish / ko'rish / galereyaga saqlash =====
 const VMAX=8*1024*1024,CSZ=520*1024,VC={};
@@ -1635,8 +1643,9 @@ let TRAP=false,IGN=0,PR=0,CLOSING=0,G=null,PREP=null;
 const CARD={chat:1,info:1,sv:1,amv:1,upf:1};
 const REAL={
  mod:()=>close(),
- pop:()=>['#cm','#menu','#ats','#emo'].forEach(s=>{const e=el(s);if(e)e.hidden=true}),
+ pop:()=>['#cm','#menu','#ats','#emo','#xm'].forEach(s=>{const e=el(s);if(e)e.hidden=true}),
  mp:()=>pvClose(),
+ lg:()=>{el('#lg').hidden=true},
  drw:()=>closeDrawer(),
  upf:()=>closeUser(),
  sv:()=>closeSV(),
@@ -1653,8 +1662,9 @@ function layers(){
  if(el('#app').hidden)return[];
  const L=[];
  if(vis('#mod'))L.push('mod');
- if(vis('#cm')||vis('#menu')||vis('#ats')||vis('#emo'))L.push('pop');
+ if(vis('#cm')||vis('#menu')||vis('#ats')||vis('#emo')||vis('#xm'))L.push('pop');
  if(vis('#mp'))L.push('mp');
+ if(vis('#lg'))L.push('lg');
  if(vis('#drw'))L.push('drw');
  if(vis('#upf'))L.push('upf');
  if(vis('#sv'))L.push('sv');
@@ -1677,7 +1687,7 @@ function navSync(){
  else if(!open&&TRAP&&!PR){PR=1;IGN++;history.back()}
 }
 const mo=new MutationObserver(navSync);
-['#app','#mod','#cm','#menu','#ats','#emo','#mp','#drw','#upf','#sv','#amv','#info','#lsel','#hsel','#rec','#pg'].forEach(s=>{const e=el(s);if(e)mo.observe(e,{attributes:true,attributeFilter:['hidden','class']})});
+['#app','#mod','#cm','#menu','#ats','#emo','#mp','#drw','#upf','#sv','#amv','#info','#lsel','#hsel','#rec','#pg','#lg','#xm'].forEach(s=>{const e=el(s);if(e)mo.observe(e,{attributes:true,attributeFilter:['hidden','class']})});
 addEventListener('popstate',()=>{
  if(!IS_APK){try{history.pushState({mxx:1},'')}catch(e){}return}
  TRAP=false;
@@ -1725,7 +1735,7 @@ function goBack(){
 }
 // ilovadagi "<svg class=sic aria-hidden=true><use href=#i-left></use></svg>" / "<svg class=sic aria-hidden=true><use href=#i-x></use></svg>" tugmalari ham shu yo'ldan o'tadi (animatsiya + tarix to'g'ri ishlaydi)
 document.addEventListener('click',e=>{
- const b=e.target.closest('#bk,#info [data-a="back"],#sv [data-s="back"],#amv [data-am="back"],#upf [data-u="back"]');
+ const b=e.target.closest('#bk,#info [data-a="back"],#sv [data-s="back"],#amv [data-am="back"],#upf [data-u="back"],#lg [data-lg="back"]');
  if(!b)return;e.preventDefault();e.stopImmediatePropagation();goBack()},true);
 // ---- chetdan surish ishorasi (progress bilan) ----
 function bki(){let b=el('#bki');if(!b){b=document.createElement('div');b.id='bki';b.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';document.body.appendChild(b)}return b}
@@ -1764,6 +1774,59 @@ document.addEventListener('touchmove',e=>{
  G.p=Math.max(0,Math.min(1,dx/(G.W*.4)));gDraw(t.clientY)},{passive:false});
 document.addEventListener('touchend',()=>gEnd(false),{passive:true});
 document.addEventListener('touchcancel',()=>gEnd(true),{passive:true});
+
+// ---- TIL ----
+var LG=[['uz','O‘zbekcha','Uzbek'],['ru','Русский','Russian'],['en','English','English'],['tr','Türkçe','Turkish'],['kk','Қазақша','Kazakh'],['ky','Кыргызча','Kyrgyz'],['tg','Тоҷикӣ','Tajik'],['tk','Türkmençe','Turkmen'],['az','Azərbaycanca','Azerbaijani'],['fa','فارسی','Persian'],['ar','العربية','Arabic'],['uk','Українська','Ukrainian'],['be','Беларуская','Belarusian'],['de','Deutsch','German'],['fr','Français','French'],['es','Español','Spanish'],['it','Italiano','Italian'],['pt','Português','Portuguese'],['nl','Nederlands','Dutch'],['pl','Polski','Polish'],['cs','Čeština','Czech'],['sv','Svenska','Swedish'],['no','Norsk','Norwegian'],['da','Dansk','Danish'],['fi','Suomi','Finnish'],['el','Ελληνικά','Greek'],['he','עברית','Hebrew'],['hi','हिन्दी','Hindi'],['bn','বাংলা','Bengali'],['ur','اردو','Urdu'],['id','Bahasa Indonesia','Indonesian'],['ms','Bahasa Melayu','Malay'],['th','ไทย','Thai'],['vi','Tiếng Việt','Vietnamese'],['zh','中文','Chinese'],['ja','日本語','Japanese'],['ko','한국어','Korean'],['ro','Română','Romanian'],['hu','Magyar','Hungarian'],['bg','Български','Bulgarian'],['sr','Српски','Serbian'],['hr','Hrvatski','Croatian'],['ka','ქართული','Georgian'],['hy','Հայերեն','Armenian'],['ps','پښتو','Pashto'],['sw','Kiswahili','Swahili'],['sq','Shqip','Albanian'],['mn','Монгол','Mongolian'],['ne','नेपाली','Nepali'],['tl','Filipino','Filipino'],['ta','தமிழ்','Tamil']];
+var TR=[['Chatlar','Chats','Чаты','Sohbetler'],['Kontaktlar','Contacts','Контакты','Kişiler'],['Sozlamalar','Settings','Настройки','Ayarlar'],['Profil','Profile','Профиль','Profil'],['Profilim','My profile','Мой профиль','Profilim'],['Qidirish','Search','Поиск','Ara'],['Yangi guruh','New group','Новая группа','Yeni grup'],['Yangi kanal','New channel','Новый канал','Yeni kanal'],['Hisob qo‘shish','Add account','Добавить аккаунт','Hesap ekle'],['Bildirishnomalar','Notifications','Уведомления','Bildirimler'],['Mavzuni almashtirish','Switch theme','Сменить тему','Temayı değiştir'],['Chiqish','Log out','Выход','Çıkış'],['Chatlarni qidirish','Search chats','Поиск чатов','Sohbetlerde ara'],['Mavzu','Theme','Тема','Tema'],['Foydalanuvchi qidirish','Find user','Найти пользователя','Kullanıcı ara'],['Hisobdan chiqish','Sign out','Выйти из аккаунта','Hesaptan çık'],['Hisoblarim','My accounts','Мои аккаунты','Hesaplarım'],['Xabar','Message','Сообщение','Mesaj'],['Orqaga','Back','Назад','Geri'],['Til','Language','Язык','Dil'],['Til qidirish','Search language','Поиск языка','Dil ara'],['Galereyaga saqlash','Save to gallery','Сохранить в галерею','Galeriye kaydet'],['Qorong‘i','Dark','Тёмная','Koyu'],['Yorug‘','Light','Светлая','Açık'],['Hech narsa topilmadi.','Nothing found.','Ничего не найдено.','Hiçbir şey bulunamadı.'],['Saralanganlarga kiritish','Add to favorites','В избранное','Favorilere ekle'],['Saralanganlardan olib tashlash','Remove from favorites','Убрать из избранного','Favorilerden çıkar'],['Birinchi xabarga o‘tish','Go to first message','К первому сообщению','İlk mesaja git'],['Sukut qilish','Mute','Отключить звук','Sessize al'],['Ovozni yoqish','Unmute','Включить звук','Sesi aç'],['Fon rasmini o‘zgartirish','Change wallpaper','Сменить фон','Duvar kağıdını değiştir'],['Fonni olib tashlash','Remove wallpaper','Убрать фон','Duvar kağıdını kaldır'],['Tarixni tozalash','Clear history','Очистить историю','Geçmişi temizle'],['Chatni o‘chirish','Delete chat','Удалить чат','Sohbeti sil'],['Barcha chatlarni tanlash','Select all chats','Выбрать все чаты','Tüm sohbetleri seç']];
+var TI={en:1,ru:2,tr:3},LNG=localStorage.getItem('mxx.lang')||'uz',ROW=new Map(),TB=false,TT=0;
+TR.forEach(r=>r.forEach(s=>ROW.set(s,r)));
+function lt(s){const r=ROW.get(s);return r?r[TI[LNG]||0]:s}
+function LNM(){const l=LG.find(x=>x[0]===LNG);return l?l[1]:'O‘zbekcha'}
+function langApply(){TB=true;
+ const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ for(let n;n=w.nextNode();){const s=n.nodeValue.trim();if(!s)continue;const x=lt(s);if(x!==s)n.nodeValue=n.nodeValue.replace(s,x)}
+ document.querySelectorAll('[placeholder],[aria-label]').forEach(e=>['placeholder','aria-label'].forEach(a=>{const v=e.getAttribute(a);if(v){const x=lt(v);if(x!==v)e.setAttribute(a,x)}}));
+ document.documentElement.lang=LNG;TB=false}
+function langList(q){q=(q||'').trim().toLowerCase();
+ el('#lgl').innerHTML=LG.filter(l=>!q||(l[1]+' '+l[2]+' '+l[0]).toLowerCase().includes(q)).map(l=>`<button class="lgr" data-l="${l[0]}"><span>${l[1]}<small>${l[2]}</small></span>${l[0]===LNG?'<span class="ck">✓</span>':''}</button>`).join('')||'<div class="emp">'+lt('Hech narsa topilmadi.')+'</div>'}
+function langPage(){const v=el('#lg');
+ v.innerHTML='<div class="lgh"><button class="ib" data-lg="back" aria-label="Orqaga"><svg class=sic aria-hidden=true><use href=#i-left></use></svg></button><input id="lgq" type="text" placeholder="Til qidirish" autocomplete="off"></div><div id="lgl"></div>';
+ v.hidden=false;langList('');langApply()}
+document.addEventListener('input',e=>{if(e.target.id==='lgq')langList(e.target.value)});
+document.addEventListener('click',e=>{const b=e.target.closest('#lgl [data-l]');if(!b)return;
+ LNG=b.dataset.l;localStorage.setItem('mxx.lang',LNG);langApply();langList(el('#lgq').value);setTimeout(goBack,160)});
+new MutationObserver(()=>{if(TB)return;clearTimeout(TT);TT=setTimeout(langApply,60)}).observe(document.body,{childList:true,subtree:true,characterData:true});
+if(LNG!=='uz')langApply();
+// ---- pastga tushirish tugmasi ----
+(function(){const m=el('#msgs'),b=document.createElement('button');b.id='sdn';b.hidden=true;b.setAttribute('aria-label','Pastga');
+ b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';document.body.appendChild(b);
+ const chk=()=>{b.hidden=!(cur&&m.scrollHeight-m.scrollTop-m.clientHeight>260)};
+ m.addEventListener('scroll',chk,{passive:true});setInterval(chk,400);
+ b.onclick=()=>m.scrollTo({top:m.scrollHeight,behavior:'smooth'})})();
+
+// ---- menyular, fon, saralanganlar, bildirishnoma, orqaga ----
+var IC=n=>`<svg class=sic-sm aria-hidden=true><use href=#i-${n}></use></svg>`;
+function favTog(ids){const all=ids.every(i=>FAV.includes(i));FAV=all?FAV.filter(i=>!ids.includes(i)):[...new Set([...FAV,...ids])];localStorage.setItem('mxx.fav',JSON.stringify(FAV));renderList();toast(all?'Saralanganlardan olib tashlandi':'Saralanganlarga kiritildi')}
+function xmShow(items){const m=el('#xm');if(!m.hidden){m.hidden=true;return}m._it=items;m.innerHTML=items.map((x,i)=>`<button data-i="${i}">${x[0]}${lt(x[1])}</button>`).join('');m.hidden=false}
+el('#xm').onclick=e=>{const b=e.target.closest('button');if(!b)return;const m=el('#xm'),f=m._it[b.dataset.i][2];m.hidden=true;f()};
+document.addEventListener('click',e=>{if(!e.target.closest('#xm,#lmore,#hm'))el('#xm').hidden=true},true);
+function wpApply(){const m=el('#msgs');if(!m)return;let u='';try{u=cur&&localStorage.getItem('mxx.wp.'+cur)||''}catch(e){}
+ m.style.backgroundImage=u?`url(${u})`:'';m.style.backgroundSize=u?'cover':'';m.style.backgroundPosition=u?'center':'';m.style.backgroundAttachment=u?'local':''}
+el('#wpf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!cur)return;const id=cur,im=new Image();
+ im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  try{localStorage.setItem('mxx.wp.'+id,c.toDataURL('image/jpeg',.72));wpApply();toast('Fon o‘zgartirildi')}catch(x){toast('Rasm juda katta')}};im.src=URL.createObjectURL(f)};
+el('#lmore').onclick=()=>{const ids=[...SEL];xmShow([[IC('star'),ids.every(i=>FAV.includes(i))?'Saralanganlardan olib tashlash':'Saralanganlarga kiritish',()=>{favTog(ids);SEL.clear();renderList()}],[IC('check2'),'Barcha chatlarni tanlash',()=>{CH.forEach(c=>SEL.add(c.id));renderList()}]])};
+el('#hm').onclick=()=>{const c=CH.find(x=>x.id===cur);if(!c)return;const hasWp=!!localStorage.getItem('mxx.wp.'+cur);
+ xmShow([[IC('star'),FAV.includes(cur)?'Saralanganlardan olib tashlash':'Saralanganlarga kiritish',()=>favTog([cur])],
+ ['<svg class=sic-sm aria-hidden=true viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>','Birinchi xabarga o‘tish',()=>el('#msgs').scrollTo({top:0,behavior:'smooth'})],
+ [IC(MUTE.includes(cur)?'bell':'belloff'),MUTE.includes(cur)?'Ovozni yoqish':'Sukut qilish',()=>{MUTE=MUTE.includes(cur)?MUTE.filter(i=>i!==cur):[...MUTE,cur];localStorage.setItem('mxx.mute',JSON.stringify(MUTE));toast(MUTE.includes(cur)?'Ovozsiz qilindi':'Ovoz yoqildi')}],
+ [IC('image'),'Fon rasmini o‘zgartirish',()=>el('#wpf').click()],
+ ...(hasWp?[[IC('x'),'Fonni olib tashlash',()=>{localStorage.removeItem('mxx.wp.'+cur);wpApply()}]]:[]),
+ [IC('trash'),'Tarixni tozalash',async()=>{if(!confirm('Chat tarixi tozalansinmi?'))return;try{await wipeMsgs(cur);toast('Tarix tozalandi')}catch(e){toast('Tozalab bo‘lmadi')}}],
+ [IC('trash'),'Chatni o‘chirish',()=>{SEL.clear();SEL.add(cur);el('#ldel').onclick()}]])};
+el('#msgs').addEventListener('load',()=>{if(Date.now()<STK){const m=el('#msgs');m.scrollTop=m.scrollHeight}},true);
+(function(){const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+ if(A&&A.addListener)A.addListener('backButton',()=>{if(layers().length)goBack();else if(A.exitApp)A.exitApp()})})();
 navSync();
 })();
 </script>
