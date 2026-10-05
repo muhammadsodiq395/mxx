@@ -37,8 +37,24 @@ jobs:
             convert sq.png -resize ${a}x${a} -background '#2D9CF0' -gravity center -extent ${a}x${a} $R/mipmap-$n/ic_launcher_round.png
             convert sq.png -resize ${s}x${s} -background none -gravity center -extent ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
           done
-      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Versiya raqami
+        run: sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+      - name: Release build
+        run: cd android && chmod +x gradlew && ./gradlew assembleRelease
+      - name: Imzolash
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KS_B64" | base64 -d > $RUNNER_TEMP/mxx.jks
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          U=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          $BT/zipalign -p -f 4 "$U" aligned.apk
+          $BT/apksigner sign --ks $RUNNER_TEMP/mxx.jks --ks-key-alias "$KEY_ALIAS" --ks-pass env:KS_PASS --key-pass env:KEY_PASS --out mxx-release.apk aligned.apk
+          $BT/apksigner verify --print-certs mxx-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: mxx-app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: mxx-release.apk
