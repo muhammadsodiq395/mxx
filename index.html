@@ -120,7 +120,7 @@ service cloud.firestore { match /databases/{d}/documents {
 <meta name="theme-color" content="#2d9cf0">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512-maskable.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MXX">
@@ -681,7 +681,7 @@ const CFG={apiKey:"AIzaSyDcggr79-p4FkQwibKEr0o7qsLaI3FJgjg",authDomain:"mxx-uz.f
 let ACCS=[];try{ACCS=JSON.parse(localStorage.getItem('mxx.accs')||'[]')}catch(e){}
 let ACT=localStorage.getItem('mxx.act')||'a0',PREV=null,OUT=false,VIEW='chats';
 const APPS={},BG={},BGN={};
-function mkApp(k){if(!APPS[k]){const a=k==='a0'?(firebase.apps.length?firebase.app():firebase.initializeApp(CFG)):firebase.initializeApp(CFG,k);const o={au:a.auth(),db:a.firestore()};o.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});APPS[k]=o}return APPS[k]}
+function mkApp(k){if(!APPS[k]){const a=k==='a0'?(firebase.apps.length?firebase.app():firebase.initializeApp(CFG)):firebase.initializeApp(CFG,k);const o={au:a.auth(),db:a.firestore()};try{o.db.settings({cacheSizeBytes:firebase.firestore.CACHE_SIZE_UNLIMITED})}catch(e){}o.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});APPS[k]=o}return APPS[k]}
 let {au,db}=mkApp(ACT);
 const FV=firebase.firestore.FieldValue,FP=firebase.firestore.FieldPath.documentId();
 const $=s=>document.querySelector(s);
@@ -713,9 +713,20 @@ function lp(el,sel,fn){
 }
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)}
 function theme(){document.documentElement.dataset.theme=TH;document.querySelector('meta[name=theme-color]').content=TH==='dark'?'#0d0e10':'#2d9cf0'}
-const online=u=>u&&u.seen?.toMillis&&Date.now()-u.seen.toMillis()<100000;
+const online=u=>u&&!(u.hide&&u!==ME)&&u.seen?.toMillis&&Date.now()-u.seen.toMillis()<100000;
 const peer=c=>c.members.find(m=>m!==U);
-function who(id){if(UC[id])return UC[id];UC[id]={name:'...'};db.doc('users/'+id).get().then(s=>{if(s.exists){UC[id]=s.data();renderList();if(typeof UPF!=='undefined'&&UPF===id)renderUser();if(AMC)amDraw();if(SV)svDraw();const c=CH.find(x=>x.id===cur);if(c){head(c);renderMsgs()}}}).catch(()=>{});return UC[id]}
+var MLD=false,MLT=0;
+const FT=new Set();
+function ucLoad(uid){try{const o=JSON.parse(localStorage.getItem('mxx.uc.'+uid)||'{}');for(const k in o){const u=o[k],t=u.s;delete u.s;if(t)u.seen={toMillis:()=>t}}return o}catch(e){return{}}}
+let UCL='';
+function ucSave(){if(!U)return;try{const o={};let n=0;for(const k in UC){const u=UC[k];if(!u||u.name==='...'||n>=150)continue;n++;o[k]={name:u.name,username:u.username||'',bio:u.bio||'',img:(u.img||'').length<60000?(u.img||''):'',hide:!!u.hide,s:u.seen&&u.seen.toMillis?u.seen.toMillis():0}}const j=JSON.stringify(o);if(j===UCL)return;UCL=j;localStorage.setItem('mxx.uc.'+U,j)}catch(e){}}
+setInterval(ucSave,6000);addEventListener('pagehide',ucSave);document.addEventListener('visibilitychange',()=>{if(document.hidden)ucSave()});
+function who(id){
+ const ref=()=>{const ap=s=>{if(s&&s.exists){UC[id]=s.data();renderList();if(typeof UPF!=='undefined'&&UPF===id)renderUser();if(AMC)amDraw();if(SV)svDraw();const c=CH.find(x=>x.id===cur);if(c){head(c);renderMsgs()}}};
+  if(!UC[id]||UC[id].name==='...')db.doc('users/'+id).get({source:'cache'}).then(ap).catch(()=>{});
+  db.doc('users/'+id).get().then(ap).catch(()=>{})};
+ if(UC[id]){if(id!==U&&!FT.has(id)&&UC[id].name!=='...'){FT.add(id);ref()}return UC[id]}
+ FT.add(id);UC[id]={name:'...'};ref();return UC[id]}
 const info=c=>c.type==='dm'?who(peer(c)):c;
 const unr=c=>c.unread?.[U]||0;
 // ===== Kirish =====
@@ -763,7 +774,7 @@ function beat(){if(U&&!document.hidden)db.doc('users/'+U).update({seen:FV.server
 function authH(u){
  stop();$('#ld').hidden=true;
  if(!u){closeInfo();U=ME=null;DR={};SEL.clear();SELM.clear();$('#ci').value='';$('#lsel').hidden=true;$('#top').hidden=false;$('#hsel').hidden=true;$('#pnb').hidden=true;CH=[];UC={};lastN={};inited=false;cur=null;M=[];$('#app').hidden=true;$('#app').classList.remove('open','gc');$('#hd').hidden=true;$('#cf').hidden=true;$('#msgs').innerHTML='<div class="emp">Chatni tanlang.</div>';$('#auth').hidden=false;authUI();document.title='MXX Messenger';onSignedOut();return}
- U=u.uid;regAcc(u);
+ U=u.uid;FT.clear();UC=ucLoad(U);if(UC[U]){ME=UC[U];$('#auth').hidden=true;$('#app').hidden=false}regAcc(u,ME||undefined);
  subs.push(db.doc('users/'+U).onSnapshot(s=>{
   if(s.exists){ME=s.data();UC[U]=ME;regAcc(u,ME);$('#auth').hidden=true;$('#app').hidden=false}
   else if(!REG)setTimeout(()=>{if(!ME&&U&&!REG)db.doc('users/'+U).set({uid:U,username:'',name:(u.email||'Foydalanuvchi').split('@')[0],bio:'',img:'',seen:FV.serverTimestamp()},{merge:true}).catch(()=>{})},1500)
@@ -806,9 +817,10 @@ function renderList(){
  const cs=CH.filter(c=>flt(c)&&(info(c).name.toLowerCase().includes(f)||(f.replace(/^@/,'')&&(info(c).username||'').toLowerCase().includes(f.replace(/^@/,''))))).sort((a,b)=>(PIN.includes(b.id)-PIN.includes(a.id))||ts(b)-ts(a));
  CH.forEach(c=>{tot+=unr(c)});
  document.querySelectorAll('#ct button').forEach(b=>{const t=b.dataset.t,n=CH.filter(c=>unr(c)>0&&(t==='all'||t==='unread'||(t==='pin'?FAV.includes(c.id):c.type===t))).length;b.querySelector('.tb').textContent=t==='pin'?'':n||''});
- $('#list').innerHTML=cs.length?cs.map(c=>{const i=info(c),n=unr(c),t=ts(c),dr=c.id!==cur&&DR[c.id]?DR[c.id].trim():'';
+ const H0=cs.length?cs.map(c=>{const i=info(c),n=unr(c),t=ts(c),dr=c.id!==cur&&DR[c.id]?DR[c.id].trim():'';
   const ic=c.type==='group'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i> ':c.type==='channel'?'<i class="ti"><svg class=sic aria-hidden=true><use href=#i-mega></use></svg></i> ':'';
-  return`<button class="row${c.id===cur?' sel':''}${SEL.has(c.id)?' chk':''}" data-id="${c.id}"><span class="aw">${av(i,56,c.type==='dm'&&online(i))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${ic}<span>${esc(i.name)}</span></b><small>${f&&i.username?'<span class="u2">@'+esc(i.username)+'</span>':dr?`<span class="dr">Qoralama:</span> ${esc(dr.slice(0,60))}`:c.last?esc((c.lfrom===U&&c.type!=='channel'?'Siz: ':'')+c.last):'Xabarlar yo‘q'}</small></span><span class="rt">${t?hm(t):''}${n?`<span class="bd${MUTE.includes(c.id)?' m':''}">${n}</span>`:''}${PIN.includes(c.id)?'<span><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></span>':''}</span></button>`}).join(''):'<div class="emp" style="margin:20px auto">Chat topilmadi.<br>Do‘stingizni topish uchun <svg class=sic-sm aria-hidden=true><use href=#i-chat></use></svg>ni bosing.</div>';
+  return`<button class="row${c.id===cur?' sel':''}${SEL.has(c.id)?' chk':''}" data-id="${c.id}"><span class="aw">${av(i,56,c.type==='dm'&&online(i))}<span class="ckb"><svg class=sic aria-hidden=true><use href=#i-check></use></svg></span></span><span class="m"><b>${ic}<span>${esc(i.name)}</span></b><small>${f&&i.username?'<span class="u2">@'+esc(i.username)+'</span>':dr?`<span class="dr">Qoralama:</span> ${esc(dr.slice(0,60))}`:c.last?esc((c.lfrom===U&&c.type!=='channel'?'Siz: ':'')+c.last):'Xabarlar yo‘q'}</small></span><span class="rt">${t?hm(t):''}${n?`<span class="bd${MUTE.includes(c.id)?' m':''}">${n}</span>`:''}${PIN.includes(c.id)?'<span><svg class=sic aria-hidden=true><use href=#i-pin></use></svg></span>':''}</span></button>`}).join(''):!inited?'':'<div class="emp" style="margin:20px auto">Chat topilmadi.<br>Do‘stingizni topish uchun <svg class=sic-sm aria-hidden=true><use href=#i-chat></use></svg>ni bosing.</div>';
+ if($('#list')._h!==H0){$('#list')._h=H0;$('#list').innerHTML=H0}
  document.title=tot?`(${tot}) MXX Messenger`:'MXX Messenger';updNav(tot);renderStories();{const L=$('#list');if(L.scrollHeight-L.clientHeight<60)$('aside').classList.remove('col')}
 }
 // ===== Chatlarni tanlash (2 soniya bosib turing) =====
@@ -837,10 +849,11 @@ $('#ldel').onclick=async()=>{
 };
 $('#q').oninput=renderList;
 $('#ct').onclick=e=>{const bt=e.target.closest('[data-t]');const t=bt&&bt.dataset.t;if(!t)return;TAB=t;document.querySelectorAll('#ct button').forEach(b=>b.classList.toggle('a',b.dataset.t===t));renderList()};
-$('#list').onclick=e=>{const r=e.target.closest('.row');if(!r)return;SEL.size?toggleSel(r.dataset.id):open(r.dataset.id)};
+var LPR=null;$('#list').addEventListener('pointerdown',e=>{const r=e.target.closest('.row');LPR=r?{id:r.dataset.id,t:Date.now()}:null},true);
+$('#list').onclick=e=>{const r=e.target.closest('.row');const id=r?r.dataset.id:(LPR&&Date.now()-LPR.t<800?LPR.id:null);LPR=null;if(!id)return;SEL.size?toggleSel(id):open(id)};
 $('#list').oncontextmenu=e=>{if(e.target.closest('.row'))e.preventDefault()};
 lp($('#list'),'.row',r=>toggleSel(r.dataset.id));
-function head(c){
+function head(c){if(window.wpApply)wpApply();
  const i=info(c),ro=c.type==='channel'&&!c.admins?.includes(U);
  const tp=Object.entries(c.typing||{}).filter(([k,v])=>k!==U&&v?.toMillis&&Date.now()-v.toMillis()<5000).map(([k])=>who(k).name);
  if(tp.length){clearTimeout(head.t);head.t=setTimeout(()=>{const z=CH.find(x=>x.id===cur);if(z)head(z)},5300)}
@@ -855,8 +868,8 @@ function open(id){
  if(cur&&!EDIT)DR[cur]=$('#ci').value;
  closeInfo();cur=id;csReset();REPLY=EDIT=null;SELM.clear();msgSelUI();$('#ci').value=DR[id]||'';bar();head(c);if(unr(c)>0)markRead(c);
  $('#app').classList.add('open');$('#hd').hidden=false;$('#cf').hidden=false;$('#emo').hidden=true;
- if(unsubM)unsubM();if(unsubP)unsubP();unsubP=null;M=[];STK=Date.now()+1800;renderMsgs(1);
- unsubM=db.collection('chats/'+id+'/msgs').orderBy('ts').limitToLast(200).onSnapshot(s=>{if(cur!==id)return;const f0=!M.length;M=s.docs.map(d=>({id:d.id,...d.data()}));renderMsgs(f0);if(f0)[80,350,900].forEach(d=>setTimeout(()=>{if(cur===id){const m=$('#msgs');m.scrollTop=m.scrollHeight}},d))},()=>toast('Xabarlarni o‘qib bo‘lmadi'));
+ if(unsubM)unsubM();if(unsubP)unsubP();unsubP=null;M=[];STK=Date.now()+1800;MLD=true;clearTimeout(MLT);MLT=setTimeout(()=>{if(cur===id&&MLD){MLD=false;renderMsgs()}},2500);renderMsgs(1);
+ unsubM=db.collection('chats/'+id+'/msgs').orderBy('ts').limitToLast(200).onSnapshot(s=>{if(cur!==id)return;MLD=s.empty&&s.metadata.fromCache;const f0=!M.length;M=s.docs.map(d=>({id:d.id,...d.data()}));renderMsgs(f0);if(f0)[80,350,900].forEach(d=>setTimeout(()=>{if(cur===id){const m=$('#msgs');m.scrollTop=m.scrollHeight}},d))},e=>toast('Xabarlarni o‘qib bo‘lmadi: '+(e&&e.code||'')));
  if(c.type==='dm'){const p=peer(c);unsubP=db.doc('users/'+p).onSnapshot(s=>{if(s.exists){UC[p]=s.data();const z=CH.find(x=>x.id===cur);if(z)head(z);renderList();if(INFO)renderInfo()}})}
  renderList();onlPoll(id);if(innerWidth>800&&!$('#ci').disabled)$('#ci').focus()
 }
@@ -887,7 +900,7 @@ function renderMsgs(stick){wpApply();
   const rx={};Object.values(x.reacts||{}).forEach(e=>rx[e]=(rx[e]||0)+1);
   const rh=Object.keys(rx).length?`<div class="rxs">${Object.entries(rx).map(([e,n])=>`<span class="rc${x.reacts[U]===e?' mine':''}" data-r="${e}">${e} ${n}</span>`).join('')}</div>`:'';
   return h+`<div class="b${me?' me':''}${SELM.has(x.id)?' sel':''}" data-id="${x.id}">${c.type!=='dm'&&!me?`<span class="mav" data-uid="${x.from}">${av(who(x.from),40)}</span><button type="button" class="fwb" data-fw="${x.id}" aria-label="Yo‘naltirish"><svg class=sic aria-hidden=true><use href=#i-fwd></use></svg></button>`:''}${c.type!=='dm'&&!me?`<span class="sn"><span class="sm" style="color:${nc(x.from)}">${esc(who(x.from).name)}</span>${tagOf(c,x.from)?`<span class="tg">${esc(tagOf(c,x.from))}</span>`:''}</span>`:''}${x.fwd?`<div class="fwd"><svg class=sic-sm aria-hidden=true><use href=#i-fwd></use></svg>${esc(x.fwd)}</div>`:''}${x.reply?`<div class="rp" data-rid="${x.reply.id}"><b>${esc(who(x.reply.from).name)}</b>${esc(x.reply.t)}</div>`:''}${x.aud?`<div class="au" data-aud="${x.id}"><button type="button" class="apl"><svg class=sic aria-hidden=true><use href=#i-play></use></svg></button><span class="abar"><i></i></span><small>${fmtT(x.aud.dur||0)}</small></div>`:''}${x.vid?`<div class="vt" data-vid="${x.id}">${x.img?`<img src="${x.img}" alt="Video">`:''}<span class="pl"><svg class=sic aria-hidden=true><use href=#i-play></use></svg></span><span class="vd">${vdur(x.vid)}</span></div>`:x.img?`<img class="pic" src="${x.img}" alt="Rasm">`:''}${x.t?lin(x.t):''}${rh}<time>${x.edited?'tahrirlandi · ':''}${hm(t)} ${tk}</time></div>`
- }).join(''):(CQ?'<div class="emp">Hech narsa topilmadi.</div>':'<div class="emp">Hali xabar yo‘q. Birinchi bo‘lib yozing.</div>');
+ }).join(''):(MLD?'':CQ?'<div class="emp">Hech narsa topilmadi.</div>':'<div class="emp">Hali xabar yo‘q. Birinchi bo‘lib yozing.</div>');
  upAppend(m);audSync();if(near||stick)m.scrollTop=m.scrollHeight;
  if(INFO)renderInfo()
 }
@@ -1062,13 +1075,13 @@ function profile(){
  <label>Foydalanuvchi nomi<input id="pu" maxlength="20" autocapitalize="none" value="${esc(ME.username||'')}" placeholder="username tanlang"></label>
  <label>Email<input value="${esc(au.currentUser.email)}" disabled></label>
  <label>Bio<textarea id="pb" maxlength="120" rows="2">${esc(ME.bio||'')}</textarea></label>
- <button type="button" class="lnk" id="pp">Parolni o‘zgartirish (emailga havola yuboriladi)</button>
+ <button type="button" class="lnk" id="pp">Parolni o‘zgartirish</button>
  <p class="err" id="pe"></p><div class="ra"><button class="btn g" data-x>Bekor qilish</button><button class="btn" id="ps">Saqlash</button></div>`);
  const pv=()=>$('#pv').innerHTML=av({name:$('#pn').value||'?',img},84);
  $('#pn').oninput=pv;
  $('#pf').onchange=e=>{const f=e.target.files[0];if(f)shrink(f,256,.8,d=>{if(d){img=d;pv()}},1)};
  $('#pr').onclick=()=>{img='';pv()};
- $('#pp').onclick=()=>au.sendPasswordResetEmail(au.currentUser.email).then(()=>toast('Havola emailingizga yuborildi')).catch(()=>toast('Yuborib bo‘lmadi'));
+ $('#pp').onclick=pwModal;
  $('#ps').onclick=async()=>{
   const n=$('#pn').value.trim(),u=norm($('#pu').value),old=ME.username||'',er=$('#pe'),bt=$('#ps');er.textContent='';
   if(n.length<2)return er.textContent='Ism kamida 2 harfdan iborat bo‘lsin.';
@@ -1087,8 +1100,21 @@ function profile(){
   }catch(x){er.textContent='Saqlab bo‘lmadi: '+(ERR[x.code]||x.code||x.message);bt.disabled=false;bt.classList.remove('sp')}
  }
 }
+function pwModal(){
+ modal(`<h2>Parolni o‘zgartirish</h2><label>Eski parol<input id="pw0" type="password" autocomplete="current-password"></label><label>Yangi parol<input id="pw1" type="password" autocomplete="new-password"></label><label>Yangi parolni tasdiqlang<input id="pw2" type="password" autocomplete="new-password"></label><p class="err" id="pwe"></p><div class="ra"><button class="btn g" data-x>Bekor qilish</button><button class="btn" id="pws">Saqlash</button></div>`);
+ $('#pw0').focus();
+ $('#pws').onclick=async()=>{
+  const o=$('#pw0').value,n=$('#pw1').value,r=$('#pw2').value,er=$('#pwe'),bt=$('#pws'),us=au.currentUser;er.textContent='';
+  if(!o)return er.textContent='Eski parolni kiriting.';
+  if(n.length<6)return er.textContent='Yangi parol kamida 6 belgidan iborat bo‘lsin.';
+  if(n!==r)return er.textContent='Yangi parollar bir xil emas.';
+  if(n===o)return er.textContent='Yangi parol eskisidan farq qilsin.';
+  bt.disabled=true;bt.classList.add('sp');
+  try{await us.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(us.email,o));await us.updatePassword(n);close();toast('Parol o‘zgartirildi')}
+  catch(x){er.textContent=(x.code==='auth/wrong-password'||x.code==='auth/invalid-credential')?'Eski parol noto‘g‘ri.':(ERR[x.code]||'Xatolik: '+(x.code||x.message));bt.disabled=false;bt.classList.remove('sp')}}
+}
 function muteTog(id){const i=MUTE.indexOf(id);i<0?MUTE.push(id):MUTE.splice(i,1);localStorage.setItem('mxx.mute',JSON.stringify(MUTE));renderList();return i<0}
-const seenTxt=u=>{
+const seenTxt=u=>{if(u&&u.hide&&u!==ME)return'last seen recently';
  if(online(u))return'onlayn';const t=u?.seen?.toMillis?.();if(!t)return'yaqinda onlayn edi';
  const d=new Date(t),n=new Date(),dd=Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
  return dd<=0?'oxirgi marta: '+hm(t)+' da':dd===1?'oxirgi marta: kecha '+hm(t)+' da':'oxirgi marta: '+d.toLocaleDateString('uz',{day:'numeric',month:'long'})
@@ -1348,10 +1374,8 @@ function renderPage(){
   const ps=CH.filter(c=>c.type==='dm').map(c=>({c,u:who(peer(c))})).sort((a,b)=>(a.u.name||'').localeCompare(b.u.name||''));
   p.innerHTML=`<div class="card" style="margin-top:8px"><button class="il" data-s="find"><i><svg class=sic aria-hidden=true><use href=#i-search></use></svg></i><span>Foydalanuvchi qidirish<small>@username bo‘yicha</small></span></button></div><div class="card">${ps.map(({c,u})=>`<button class="mrow" data-c="${c.id}">${av(u,46,online(u))}<span class="m"><b>${esc(u.name)}</b><small class="${online(u)?'ol':''}">${esc(seenTxt(u))}</small></span></button>`).join('')||'<div class="none">Hali kontakt yo‘q</div>'}</div>`
  }else if(VIEW==='settings'){
-  p.innerHTML=`<div class="card" style="margin-top:8px"><button class="il" data-s="lang"><i><svg class=sic aria-hidden=true viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></i><span>Til<small>${LNM()}</small></span></button><button class="il" data-s="theme"><i><svg class=sic aria-hidden=true><use href=#i-palette></use></svg></i><span>Mavzu<small>${TH==='dark'?'Qorong‘i':'Yorug‘'}</small></span></button><button class="il" data-s="notif"><i><svg class=sic aria-hidden=true><use href=#i-bell></use></svg></i><span>Bildirishnomalar</span></button><button class="il" data-s="accs"><i><svg class=sic aria-hidden=true><use href=#i-users></use></svg></i><span>Hisoblar<small>${ACCS.length}/10</small></span></button><button class="il" data-s="add"><i><svg class=sic aria-hidden=true><use href=#i-plus></use></svg></i><span>Hisob qo‘shish</span></button></div>
-  <div class="card"><div class="il"><i><svg class=sic aria-hidden=true><use href=#i-dl></use></svg></i><span>Galereyaga saqlash<small>Rasm/videoni oching yoki xabarni bosib turing → “Galereyaga saqlash”</small></span></div></div>
-  <div class="card"><button class="il dg" data-s="logout"><i><svg class=sic aria-hidden=true><use href=#i-logout></use></svg></i><span>Hisobdan chiqish</span></button></div>`
- }else{
+  p.innerHTML=stHome()
+  }else{
   const m=ME||{name:'...'};
   p.innerHTML=`<div class="pf"><span data-s="ava">${av(m,128)}</span><h2>${esc(m.name)}</h2><small>${online(m)?'onlayn':esc(seenTxt(m))}</small></div>
   <div class="acts"><button data-s="photo"><i><svg class=sic aria-hidden=true><use href=#i-camera></use></svg></i>Rasm belgilash</button><button data-s="edit"><i><svg class=sic aria-hidden=true><use href=#i-edit></use></svg></i>Axborotni tahrirlash</button><button data-s="settings"><i><svg class=sic aria-hidden=true><use href=#i-sliders></use></svg></i>Sozlamalar</button></div>
@@ -1360,7 +1384,7 @@ function renderPage(){
 $('#pg').onclick=e=>{const b=e.target.closest('[data-s],[data-c]');if(!b)return;if(b.dataset.c)return open(b.dataset.c);
  const s=b.dataset.s;
  if(s==='find')find();else if(s==='photo')pickPhoto();else if(s==='edit')profile();else if(s==='settings')setView('settings');
- else if(s==='lang')langPage();else if(s==='theme'){togTheme();renderPage()}else if(s==='notif')askNotif();else if(s==='accs')accsModal();else if(s==='add')addAcc();
+ else if(s&&s.startsWith('x:'))stPage(s.slice(2));else if(s==='lang')langPage();else if(s==='theme'){togTheme();renderPage()}else if(s==='notif')askNotif();else if(s==='accs')accsModal();else if(s==='add')addAcc();
  else if(s==='logout'){if(confirm('Hisobdan chiqasizmi?'))doLogout()}else if(s==='ava'&&ME?.img)viewMedia('i',ME.img,'mxx_profil.jpg')};
 // ===== Video yuborish / ko'rish / galereyaga saqlash =====
 const VMAX=8*1024*1024,CSZ=520*1024,VC={};
@@ -1776,27 +1800,69 @@ document.addEventListener('touchend',()=>gEnd(false),{passive:true});
 document.addEventListener('touchcancel',()=>gEnd(true),{passive:true});
 
 // ---- TIL ----
-var LG=[['uz','O‘zbekcha','Uzbek'],['ru','Русский','Russian'],['en','English','English'],['tr','Türkçe','Turkish'],['kk','Қазақша','Kazakh'],['ky','Кыргызча','Kyrgyz'],['tg','Тоҷикӣ','Tajik'],['tk','Türkmençe','Turkmen'],['az','Azərbaycanca','Azerbaijani'],['fa','فارسی','Persian'],['ar','العربية','Arabic'],['uk','Українська','Ukrainian'],['be','Беларуская','Belarusian'],['de','Deutsch','German'],['fr','Français','French'],['es','Español','Spanish'],['it','Italiano','Italian'],['pt','Português','Portuguese'],['nl','Nederlands','Dutch'],['pl','Polski','Polish'],['cs','Čeština','Czech'],['sv','Svenska','Swedish'],['no','Norsk','Norwegian'],['da','Dansk','Danish'],['fi','Suomi','Finnish'],['el','Ελληνικά','Greek'],['he','עברית','Hebrew'],['hi','हिन्दी','Hindi'],['bn','বাংলা','Bengali'],['ur','اردو','Urdu'],['id','Bahasa Indonesia','Indonesian'],['ms','Bahasa Melayu','Malay'],['th','ไทย','Thai'],['vi','Tiếng Việt','Vietnamese'],['zh','中文','Chinese'],['ja','日本語','Japanese'],['ko','한국어','Korean'],['ro','Română','Romanian'],['hu','Magyar','Hungarian'],['bg','Български','Bulgarian'],['sr','Српски','Serbian'],['hr','Hrvatski','Croatian'],['ka','ქართული','Georgian'],['hy','Հայերեն','Armenian'],['ps','پښتو','Pashto'],['sw','Kiswahili','Swahili'],['sq','Shqip','Albanian'],['mn','Монгол','Mongolian'],['ne','नेपाली','Nepali'],['tl','Filipino','Filipino'],['ta','தமிழ்','Tamil']];
+var LG=[['en','English','English'],['uz','O‘zbekcha','O‘zbekcha'],['ru','Русский','Русский'],['tr','Türkçe','Türkçe'],['es','Español','Español'],['de','Deutsch','Deutsch'],['fr','Français','Français'],['ar','العربية','العربية'],['hi','हिन्दी','हिन्दी'],['zh','中文','中文'],['ja','日本語','日本語'],['ko','한국어','한국어'],['pt','Português','Português'],['it','Italiano','Italiano'],['id','Bahasa Indonesia','Bahasa Indonesia'],['fa','فارسی','فارسی'],['kk','Қазақша','Қазақша'],['tg','Тоҷикӣ','Тоҷикӣ'],['az','Azərbaycanca','Azərbaycanca'],['uk','Українська','Українська']];
 var TR=[['Chatlar','Chats','Чаты','Sohbetler'],['Kontaktlar','Contacts','Контакты','Kişiler'],['Sozlamalar','Settings','Настройки','Ayarlar'],['Profil','Profile','Профиль','Profil'],['Profilim','My profile','Мой профиль','Profilim'],['Qidirish','Search','Поиск','Ara'],['Yangi guruh','New group','Новая группа','Yeni grup'],['Yangi kanal','New channel','Новый канал','Yeni kanal'],['Hisob qo‘shish','Add account','Добавить аккаунт','Hesap ekle'],['Bildirishnomalar','Notifications','Уведомления','Bildirimler'],['Mavzuni almashtirish','Switch theme','Сменить тему','Temayı değiştir'],['Chiqish','Log out','Выход','Çıkış'],['Chatlarni qidirish','Search chats','Поиск чатов','Sohbetlerde ara'],['Mavzu','Theme','Тема','Tema'],['Foydalanuvchi qidirish','Find user','Найти пользователя','Kullanıcı ara'],['Hisobdan chiqish','Sign out','Выйти из аккаунта','Hesaptan çık'],['Hisoblarim','My accounts','Мои аккаунты','Hesaplarım'],['Xabar','Message','Сообщение','Mesaj'],['Orqaga','Back','Назад','Geri'],['Til','Language','Язык','Dil'],['Til qidirish','Search language','Поиск языка','Dil ara'],['Galereyaga saqlash','Save to gallery','Сохранить в галерею','Galeriye kaydet'],['Qorong‘i','Dark','Тёмная','Koyu'],['Yorug‘','Light','Светлая','Açık'],['Hech narsa topilmadi.','Nothing found.','Ничего не найдено.','Hiçbir şey bulunamadı.'],['Saralanganlarga kiritish','Add to favorites','В избранное','Favorilere ekle'],['Saralanganlardan olib tashlash','Remove from favorites','Убрать из избранного','Favorilerden çıkar'],['Birinchi xabarga o‘tish','Go to first message','К первому сообщению','İlk mesaja git'],['Sukut qilish','Mute','Отключить звук','Sessize al'],['Ovozni yoqish','Unmute','Включить звук','Sesi aç'],['Fon rasmini o‘zgartirish','Change wallpaper','Сменить фон','Duvar kağıdını değiştir'],['Fonni olib tashlash','Remove wallpaper','Убрать фон','Duvar kağıdını kaldır'],['Tarixni tozalash','Clear history','Очистить историю','Geçmişi temizle'],['Chatni o‘chirish','Delete chat','Удалить чат','Sohbeti sil'],['Barcha chatlarni tanlash','Select all chats','Выбрать все чаты','Tüm sohbetleri seç']];
-var TI={en:1,ru:2,tr:3},LNG=localStorage.getItem('mxx.lang')||'uz',ROW=new Map(),TB=false,TT=0;
-TR.forEach(r=>r.forEach(s=>ROW.set(s,r)));
-function lt(s){const r=ROW.get(s);return r?r[TI[LNG]||0]:s}
-function LNM(){const l=LG.find(x=>x[0]===LNG);return l?l[1]:'O‘zbekcha'}
+var LC=LG.map(l=>l[0]),LNG=localStorage.getItem('mxx.lang')||'en',ROW=new Map(),TB=false,TT=0;
+if(!LC.includes(LNG))LNG='en';
+// eski jadval [uz,en,ru,tr] -> yangi tartib (en,uz,ru,tr,...)
+TR.forEach(r=>{const n=[r[1],r[0],r[2],r[3]];n.forEach(x=>ROW.set(x,n))});
+// 20 til: en|uz|ru|tr|es|de|fr|ar|hi|zh|ja|ko|pt|it|id|fa|kk|tg|az|uk. Yangi qator qo'shish: shu ro'yxatga bitta satr
+var NR=[
+'Settings|Sozlamalar|Настройки|Ayarlar|Ajustes|Einstellungen|Paramètres|الإعدادات|सेटिंग्स|设置|設定|설정|Configurações|Impostazioni|Pengaturan|تنظیمات|Баптаулар|Танзимот|Parametrlər|Налаштування',
+'Accounts|Hisoblar|Аккаунты|Hesaplar|Cuentas|Konten|Comptes|الحسابات|खाते|账号列表|アカウント一覧|계정 목록|Contas|Account|Daftar akun|حساب‌ها|Аккаунттар|Ҳисобҳо|Hesablar|Облікові записи',
+'Account|Hisob|Аккаунт|Hesap|Cuenta|Konto|Compte|الحساب|खाता|账号|アカウント|계정|Conta|Account|Akun|حساب|Аккаунт|Ҳисоб|Hesab|Обліковий запис',
+'Email, username, bio|Email, foydalanuvchi nomi, tarjimayi hol|Почта, имя пользователя, о себе|E-posta, kullanıcı adı, biyografi|Correo, usuario, bio|E-Mail, Nutzername, Bio|E-mail, pseudo, bio|البريد، اسم المستخدم، النبذة|ईमेल, यूज़रनेम, बायो|邮箱、用户名、简介|メール、ユーザー名、自己紹介|이메일, 사용자 이름, 소개|E-mail, usuário, bio|Email, username, bio|Email, nama pengguna, bio|ایمیل، نام کاربری، بیو|Пошта, пайдаланушы аты, өзі туралы|Почта, номи корбар, тавсиф|E-poçt, istifadəçi adı, bio|Пошта, ім’я користувача, про себе',
+'Chat settings|Chat sozlamalari|Настройки чатов|Sohbet ayarları|Ajustes del chat|Chat-Einstellungen|Paramètres du chat|إعدادات الدردشة|चैट सेटिंग्स|聊天设置|チャット設定|채팅 설정|Config. de chat|Impostazioni chat|Pengaturan obrolan|تنظیمات گفتگو|Чат баптаулары|Танзимоти чат|Çat parametrləri|Налаштування чатів',
+'Wallpaper, dark mode, animations|Fon rasmi, tungi rejim, animatsiyalar|Фон, тёмная тема, анимации|Duvar kağıdı, karanlık mod, animasyonlar|Fondo, modo oscuro, animaciones|Hintergrund, Dunkelmodus, Animationen|Fond, mode sombre, animations|الخلفية، الوضع الليلي، الحركات|वॉलपेपर, डार्क मोड, एनिमेशन|壁纸、夜间模式、动画|壁紙、ダークモード、アニメーション|배경, 다크 모드, 애니메이션|Fundo, modo escuro, animações|Sfondo, modalità scura, animazioni|Wallpaper, mode gelap, animasi|پس‌زمینه، حالت شب، انیمیشن|Фон, түнгі режим, анимациялар|Фон, ҳолати шаб, аниматсия|Fon, gecə rejimi, animasiyalar|Фон, нічний режим, анімації',
+'Privacy and Security|Maxfiylik va xavfsizlik|Конфиденциальность|Gizlilik ve Güvenlik|Privacidad y seguridad|Datenschutz und Sicherheit|Confidentialité et sécurité|الخصوصية والأمان|गोपनीयता और सुरक्षा|隐私与安全|プライバシーとセキュリティ|개인정보 및 보안|Privacidade e segurança|Privacy e sicurezza|Privasi dan keamanan|حریم خصوصی و امنیت|Құпиялылық және қауіпсіздік|Махфият ва амният|Məxfilik və təhlükəsizlik|Конфіденційність і безпека',
+'Last seen, devices|Oxirgi faollik, qurilmalar|Был(а) в сети, устройства|Son görülme, cihazlar|Visto, dispositivos|Zuletzt online, Geräte|Dernière connexion, appareils|آخر ظهور، الأجهزة|अंतिम बार देखा, डिवाइस|最后在线、设备|最終ログイン、端末|최근 접속, 기기|Visto por último, dispositivos|Ultimo accesso, dispositivi|Terakhir dilihat, perangkat|آخرین بازدید، دستگاه‌ها|Соңғы кіру, құрылғылар|Охирин ташриф, дастгоҳҳо|Son görülmə, cihazlar|Остання активність, пристрої',
+'Notifications|Bildirishnomalar|Уведомления|Bildirimler|Notificaciones|Benachrichtigungen|Notifications|الإشعارات|सूचनाएं|通知|通知|알림|Notificações|Notifiche|Notifikasi|اعلان‌ها|Хабарландырулар|Огоҳиномаҳо|Bildirişlər|Сповіщення',
+'Sounds and previews|Tovushlar va ko‘rinish|Звуки и предпросмотр|Sesler ve önizleme|Sonidos y vista previa|Töne und Vorschau|Sons et aperçus|الأصوات والمعاينة|ध्वनि और पूर्वावलोकन|声音与预览|サウンドとプレビュー|소리 및 미리보기|Sons e prévia|Suoni e anteprima|Suara dan pratinjau|صداها و پیش‌نمایش|Дыбыстар және алдын ала көру|Садоҳо ва пешнамоиш|Səslər və önbaxış|Звуки та попередній перегляд',
+'Data and Storage|Ma’lumotlar va xotira|Данные и память|Veri ve Depolama|Datos y almacenamiento|Daten und Speicher|Données et stockage|البيانات والتخزين|डेटा और स्टोरेज|数据与存储|データとストレージ|데이터 및 저장공간|Dados e armazenamento|Dati e archiviazione|Data dan penyimpanan|داده و حافظه|Деректер және жад|Маълумот ва хотира|Data və yaddaş|Дані та пам’ять',
+'Storage usage, cache|Xotira, kesh|Память, кэш|Depolama, önbellek|Almacenamiento, caché|Speicher, Cache|Stockage, cache|التخزين، الذاكرة المؤقتة|स्टोरेज, कैश|存储、缓存|ストレージ、キャッシュ|저장공간, 캐시|Armazenamento, cache|Penyimpanan, cache|Penyimpanan, cache|حافظه، کش|Жад, кэш|Хотира, кэш|Yaddaş, keş|Пам’ять, кеш',
+'Chat folders|Chat jildlari|Папки с чатами|Sohbet klasörleri|Carpetas de chats|Chat-Ordner|Dossiers de chats|مجلدات الدردشة|चैट फ़ोल्डर|聊天文件夹|チャットフォルダ|채팅 폴더|Pastas de chats|Cartelle chat|Folder obrolan|پوشه‌های گفتگو|Чат қалталары|Ҷузвдонҳои чат|Çat qovluqları|Папки чатів',
+'Sort chats into folders|Chatlarni jildlarga saralash|Распределите чаты по папкам|Sohbetleri klasörlere ayır|Organiza chats en carpetas|Chats in Ordner sortieren|Triez vos chats en dossiers|رتّب الدردشات في مجلدات|चैट को फ़ोल्डर में रखें|将聊天分类到文件夹|チャットをフォルダに整理|채팅을 폴더로 정리|Organize chats em pastas|Ordina le chat in cartelle|Atur obrolan ke folder|گفتگوها را دسته‌بندی کنید|Чаттарды қалталарға бөлу|Чатҳоро ба ҷузвдон ҷудо кунед|Çatları qovluqlara ayırın|Розподіліть чати по папках',
+'Devices|Qurilmalar|Устройства|Cihazlar|Dispositivos|Geräte|Appareils|الأجهزة|डिवाइस|设备|端末|기기|Dispositivos|Dispositivi|Perangkat|دستگاه‌ها|Құрылғылар|Дастгоҳҳо|Cihazlar|Пристрої',
+'Manage linked devices|Ulangan qurilmalarni boshqarish|Управление устройствами|Bağlı cihazları yönet|Gestiona dispositivos|Geräte verwalten|Gérer les appareils|إدارة الأجهزة|डिवाइस प्रबंधित करें|管理已连接设备|接続端末を管理|연결된 기기 관리|Gerir dispositivos|Gestisci dispositivi|Kelola perangkat|مدیریت دستگاه‌ها|Құрылғыларды басқару|Идораи дастгоҳҳо|Cihazları idarə et|Керування пристроями',
+'Power saving|Quvvat tejash|Энергосбережение|Güç tasarrufu|Ahorro de energía|Energiesparen|Économie d’énergie|توفير الطاقة|पावर सेविंग|省电|省電力|절전|Economia de energia|Risparmio energetico|Hemat daya|صرفه‌جویی انرژی|Қуатты үнемдеу|Сарфаи нерӯ|Enerji qənaəti|Енергозбереження',
+'Fewer animations on low battery|Past quvvatda quvvat sarfini kamaytirish|Меньше анимаций при низком заряде|Düşük pilde animasyonları azalt|Menos animaciones con poca batería|Weniger Animationen bei niedrigem Akku|Moins d’animations si batterie faible|حركات أقل عند انخفاض البطارية|कम बैटरी पर कम एनिमेशन|低电量时减少动画|低電力時にアニメを減らす|배터리 부족 시 애니메이션 줄이기|Menos animações com pouca bateria|Meno animazioni a batteria scarica|Kurangi animasi saat baterai rendah|کاهش انیمیشن در باتری کم|Қуат аз болса анимацияны азайту|Дар шарҷи кам аниматсияро кам кунед|Aşağı enerjidə animasiyaları azalt|Менше анімацій при низькому заряді',
+'Language|Til|Язык|Dil|Idioma|Sprache|Langue|اللغة|भाषा|语言|言語|언어|Idioma|Lingua|Bahasa|زبان|Тіл|Забон|Dil|Мова',
+'Dark mode|Tungi rejim|Тёмная тема|Karanlık mod|Modo oscuro|Dunkelmodus|Mode sombre|الوضع الليلي|डार्क मोड|夜间模式|ダークモード|다크 모드|Modo escuro|Modalità scura|Mode gelap|حالت شب|Түнгі режим|Ҳолати шаб|Gecə rejimi|Нічний режим',
+'Text size|Matn o‘lchami|Размер текста|Metin boyutu|Tamaño del texto|Textgröße|Taille du texte|حجم النص|टेक्स्ट आकार|文字大小|文字サイズ|글자 크기|Tamanho do texto|Dimensione testo|Ukuran teks|اندازه متن|Мәтін өлшемі|Андозаи матн|Mətn ölçüsü|Розмір тексту',
+'Animations|Animatsiyalar|Анимации|Animasyonlar|Animaciones|Animationen|Animations|الحركات|एनिमेशन|动画|アニメーション|애니메이션|Animações|Animazioni|Animasi|انیمیشن‌ها|Анимациялар|Аниматсияҳо|Animasiyalar|Анімації',
+'Sounds|Tovushlar|Звуки|Sesler|Sonidos|Töne|Sons|الأصوات|ध्वनि|声音|サウンド|소리|Sons|Suoni|Suara|صداها|Дыбыстар|Садоҳо|Səslər|Звуки',
+'Message preview|Xabar ko‘rinishi|Предпросмотр сообщений|Mesaj önizleme|Vista previa|Nachrichtenvorschau|Aperçu du message|معاينة الرسالة|संदेश पूर्वावलोकन|消息预览|メッセージプレビュー|메시지 미리보기|Prévia da mensagem|Anteprima messaggio|Pratinjau pesan|پیش‌نمایش پیام|Хабар алдын ала көру|Пешнамоиши паём|Mesaj önbaxışı|Попередній перегляд',
+'Hide last seen and online|Oxirgi faollikni yashirish|Скрыть время посещения|Son görülmeyi gizle|Ocultar última vez|Zuletzt online verbergen|Masquer la dernière connexion|إخفاء آخر ظهور|अंतिम बार देखा छुपाएं|隐藏最后在线|最終ログインを隠す|최근 접속 숨기기|Ocultar visto por último|Nascondi ultimo accesso|Sembunyikan terakhir dilihat|پنهان کردن آخرین بازدید|Соңғы кіруді жасыру|Охирин ташрифро пинҳон кунед|Son görülməni gizlət|Приховати активність',
+'Storage used|Ishlatilgan xotira|Использовано памяти|Kullanılan depolama|Almacenamiento usado|Belegter Speicher|Stockage utilisé|المساحة المستخدمة|उपयोग किया स्टोरेज|已用存储|使用中のストレージ|사용 중인 저장공간|Armazenamento usado|Spazio usato|Penyimpanan terpakai|حافظه استفاده‌شده|Қолданылған жад|Хотираи истифодашуда|İstifadə olunan yaddaş|Використано пам’яті',
+'Clear cache|Keshni tozalash|Очистить кэш|Önbelleği temizle|Borrar caché|Cache leeren|Vider le cache|مسح الذاكرة المؤقتة|कैश साफ़ करें|清除缓存|キャッシュを消去|캐시 지우기|Limpar cache|Svuota cache|Hapus cache|پاک کردن کش|Кэшті тазалау|Тоза кардани кэш|Keşi təmizlə|Очистити кеш',
+'New folder|Yangi jild|Новая папка|Yeni klasör|Nueva carpeta|Neuer Ordner|Nouveau dossier|مجلد جديد|नया फ़ोल्डर|新建文件夹|新しいフォルダ|새 폴더|Nova pasta|Nuova cartella|Folder baru|پوشه جدید|Жаңа қалта|Ҷузвдони нав|Yeni qovluq|Нова папка',
+'Folder name|Jild nomi|Название папки|Klasör adı|Nombre de carpeta|Ordnername|Nom du dossier|اسم المجلد|फ़ोल्डर का नाम|文件夹名称|フォルダ名|폴더 이름|Nome da pasta|Nome cartella|Nama folder|نام پوشه|Қалта атауы|Номи ҷузвдон|Qovluq adı|Назва папки',
+'Save|Saqlash|Сохранить|Kaydet|Guardar|Speichern|Enregistrer|حفظ|सहेजें|保存|保存|저장|Salvar|Salva|Simpan|ذخیره|Сақтау|Захира|Yadda saxla|Зберегти',
+'Off|O‘chiq|Выкл.|Kapalı|Desactivado|Aus|Désactivé|إيقاف|बंद|关闭|オフ|끄기|Desligado|Off|Mati|خاموش|Өшірулі|Хомӯш|Söndürülüb|Вимк.',
+'Auto|Avto|Авто|Otomatik|Auto|Auto|Auto|تلقائي|ऑटो|自动|自動|자동|Auto|Auto|Otomatis|خودکار|Авто|Худкор|Avtomatik|Авто',
+'Always|Doim|Всегда|Her zaman|Siempre|Immer|Toujours|دائمًا|हमेशा|始终|常にオン|항상|Sempre|Sempre|Selalu|همیشه|Әрқашан|Ҳамеша|Həmişə|Завжди',
+'This device|Shu qurilma|Это устройство|Bu cihaz|Este dispositivo|Dieses Gerät|Cet appareil|هذا الجهاز|यह डिवाइस|本设备|この端末|이 기기|Este dispositivo|Questo dispositivo|Perangkat ini|این دستگاه|Осы құрылғы|Ин дастгоҳ|Bu cihaz|Цей пристрій',
+'Edit profile|Profilni tahrirlash|Изменить профиль|Profili düzenle|Editar perfil|Profil bearbeiten|Modifier le profil|تعديل الملف|प्रोफ़ाइल संपादित करें|编辑资料|プロフィール編集|프로필 편집|Editar perfil|Modifica profilo|Ubah profil|ویرایش نمایه|Профильді өзгерту|Таҳрири профил|Profilə düzəliş|Редагувати профіль',
+'Delete|O‘chirish|Удалить|Sil|Eliminar|Löschen|Supprimer|حذف|हटाएं|删除|削除|삭제|Excluir|Elimina|Hapus|حذف|Жою|Нест кардан|Sil|Видалити',
+'Search language|Til qidirish|Поиск языка|Dil ara|Buscar idioma|Sprache suchen|Rechercher une langue|بحث عن لغة|भाषा खोजें|搜索语言|言語を検索|언어 검색|Buscar idioma|Cerca lingua|Cari bahasa|جستجوی زبان|Тілді іздеу|Ҷустуҷӯи забон|Dil axtar|Пошук мови'];
+NR.forEach(r=>{const n=r.split('|');n.forEach(x=>ROW.set(x,n))});
+function lt(s){const r=ROW.get(s);if(!r)return s;const i=LC.indexOf(LNG);return r[i]||r[0]}
+function LNM(){const l=LG.find(x=>x[0]===LNG);return l?l[1]:'English'}
 function langApply(){TB=true;
  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
- for(let n;n=w.nextNode();){const s=n.nodeValue.trim();if(!s)continue;const x=lt(s);if(x!==s)n.nodeValue=n.nodeValue.replace(s,x)}
+ for(let n;n=w.nextNode();){const s=n.nodeValue.trim();if(!s||(n.parentElement&&n.parentElement.closest('#msgs .b,#ci,#csq,[contenteditable]')))continue;const x=lt(s);if(x!==s)n.nodeValue=n.nodeValue.replace(s,x)}
  document.querySelectorAll('[placeholder],[aria-label]').forEach(e=>['placeholder','aria-label'].forEach(a=>{const v=e.getAttribute(a);if(v){const x=lt(v);if(x!==v)e.setAttribute(a,x)}}));
- document.documentElement.lang=LNG;TB=false}
+ document.documentElement.lang=LNG;document.documentElement.dir=LNG==='ar'||LNG==='fa'?'rtl':'ltr';TB=false}
 function langList(q){q=(q||'').trim().toLowerCase();
- el('#lgl').innerHTML=LG.filter(l=>!q||(l[1]+' '+l[2]+' '+l[0]).toLowerCase().includes(q)).map(l=>`<button class="lgr" data-l="${l[0]}"><span>${l[1]}<small>${l[2]}</small></span>${l[0]===LNG?'<span class="ck">✓</span>':''}</button>`).join('')||'<div class="emp">'+lt('Hech narsa topilmadi.')+'</div>'}
+ el('#lgl').innerHTML=LG.filter(l=>!q||(l[1]+' '+l[2]+' '+l[0]).toLowerCase().includes(q)).map(l=>`<button class="lgr" data-l="${l[0]}"><span>${l[1]}</span>${l[0]===LNG?'<span class="ck">✓</span>':''}</button>`).join('')||'<div class="emp">'+lt('Nothing found.')+'</div>'}
 function langPage(){const v=el('#lg');
- v.innerHTML='<div class="lgh"><button class="ib" data-lg="back" aria-label="Orqaga"><svg class=sic aria-hidden=true><use href=#i-left></use></svg></button><input id="lgq" type="text" placeholder="Til qidirish" autocomplete="off"></div><div id="lgl"></div>';
+ v.innerHTML='<div class="lgh"><button class="ib" data-lg="back" aria-label="Orqaga"><svg class=sic aria-hidden=true><use href=#i-left></use></svg></button><input id="lgq" type="text" placeholder="Search language" autocomplete="off"></div><div id="lgl"></div>';
  v.hidden=false;langList('');langApply()}
 document.addEventListener('input',e=>{if(e.target.id==='lgq')langList(e.target.value)});
 document.addEventListener('click',e=>{const b=e.target.closest('#lgl [data-l]');if(!b)return;
  LNG=b.dataset.l;localStorage.setItem('mxx.lang',LNG);langApply();langList(el('#lgq').value);setTimeout(goBack,160)});
 new MutationObserver(()=>{if(TB)return;clearTimeout(TT);TT=setTimeout(langApply,60)}).observe(document.body,{childList:true,subtree:true,characterData:true});
-if(LNG!=='uz')langApply();
+langApply();
 // ---- pastga tushirish tugmasi ----
 (function(){const m=el('#msgs'),b=document.createElement('button');b.id='sdn';b.hidden=true;b.setAttribute('aria-label','Pastga');
  b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';document.body.appendChild(b);
@@ -1810,23 +1876,109 @@ function favTog(ids){const all=ids.every(i=>FAV.includes(i));FAV=all?FAV.filter(
 function xmShow(items){const m=el('#xm');if(!m.hidden){m.hidden=true;return}m._it=items;m.innerHTML=items.map((x,i)=>`<button data-i="${i}">${x[0]}${lt(x[1])}</button>`).join('');m.hidden=false}
 el('#xm').onclick=e=>{const b=e.target.closest('button');if(!b)return;const m=el('#xm'),f=m._it[b.dataset.i][2];m.hidden=true;f()};
 document.addEventListener('click',e=>{if(!e.target.closest('#xm,#lmore,#hm'))el('#xm').hidden=true},true);
-function wpApply(){const m=el('#msgs');if(!m)return;let u='';try{u=cur&&localStorage.getItem('mxx.wp.'+cur)||''}catch(e){}
- m.style.backgroundImage=u?`url(${u})`:'';m.style.backgroundSize=u?'cover':'';m.style.backgroundPosition=u?'center':'';m.style.backgroundAttachment=u?'local':''}
-el('#wpf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!cur)return;const id=cur,im=new Image();
- im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-  try{localStorage.setItem('mxx.wp.'+id,c.toDataURL('image/jpeg',.72));wpApply();toast('Fon o‘zgartirildi')}catch(x){toast('Rasm juda katta')}};im.src=URL.createObjectURL(f)};
+function wpApply(){const m=el('#msgs');if(!m)return;const c=CH.find(x=>x.id===cur);let u='';try{if(c&&c.type!=='dm')u=c.wp||'';else if(cur)u=localStorage.getItem('mxx.wp.'+cur)||'';if(!u)u=localStorage.getItem('mxx.wpall')||''}catch(e){}
+ if(m._wp===u)return;m._wp=u;
+ m.style.backgroundImage=u?`url("${u}")`:'';m.style.backgroundSize=u?'cover':'';m.style.backgroundPosition=u?'center':'';m.style.backgroundRepeat=u?'no-repeat':'';m.style.backgroundAttachment=u?'scroll':''}
+el('#wpf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||!cur)return;const id=cur,ch=CH.find(x=>x.id===id);if(!ch)return;const dmc=ch.type==='dm';if(!dmc&&!canPin(ch))return toast('Faqat ega yoki admin fonni o‘zgartira oladi');const im=new Image();
+ im.onload=()=>{const mx=dmc?900:720,k=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  const d=c.toDataURL('image/jpeg',dmc?.72:.6);
+  if(dmc){try{localStorage.setItem('mxx.wp.'+id,d);wpApply();toast('Fon o‘zgartirildi')}catch(x){toast('Rasm juda katta')}}
+  else{if(d.length>600000)return toast('Rasm juda katta');db.doc('chats/'+id).update({wp:d}).then(()=>toast('Fon hamma uchun o‘zgartirildi')).catch(()=>toast('Ruxsat yo‘q'))}};
+ im.onerror=()=>toast('Rasm ochilmadi');im.src=URL.createObjectURL(f)};
 el('#lmore').onclick=()=>{const ids=[...SEL];xmShow([[IC('star'),ids.every(i=>FAV.includes(i))?'Saralanganlardan olib tashlash':'Saralanganlarga kiritish',()=>{favTog(ids);SEL.clear();renderList()}],[IC('check2'),'Barcha chatlarni tanlash',()=>{CH.forEach(c=>SEL.add(c.id));renderList()}]])};
-el('#hm').onclick=()=>{const c=CH.find(x=>x.id===cur);if(!c)return;const hasWp=!!localStorage.getItem('mxx.wp.'+cur);
+el('#hm').onclick=()=>{const c=CH.find(x=>x.id===cur);if(!c)return;const dmc=c.type==='dm',canWp=dmc||canPin(c),hasWp=dmc?!!localStorage.getItem('mxx.wp.'+cur):!!c.wp;
  xmShow([[IC('star'),FAV.includes(cur)?'Saralanganlardan olib tashlash':'Saralanganlarga kiritish',()=>favTog([cur])],
  ['<svg class=sic-sm aria-hidden=true viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>','Birinchi xabarga o‘tish',()=>el('#msgs').scrollTo({top:0,behavior:'smooth'})],
  [IC(MUTE.includes(cur)?'bell':'belloff'),MUTE.includes(cur)?'Ovozni yoqish':'Sukut qilish',()=>{MUTE=MUTE.includes(cur)?MUTE.filter(i=>i!==cur):[...MUTE,cur];localStorage.setItem('mxx.mute',JSON.stringify(MUTE));toast(MUTE.includes(cur)?'Ovozsiz qilindi':'Ovoz yoqildi')}],
- [IC('image'),'Fon rasmini o‘zgartirish',()=>el('#wpf').click()],
- ...(hasWp?[[IC('x'),'Fonni olib tashlash',()=>{localStorage.removeItem('mxx.wp.'+cur);wpApply()}]]:[]),
+ ...(canWp?[[IC('image'),'Fon rasmini o‘zgartirish',()=>el('#wpf').click()]]:[]),
+ ...(hasWp&&canWp?[[IC('x'),'Fonni olib tashlash',()=>{if(dmc){localStorage.removeItem('mxx.wp.'+cur);wpApply()}else db.doc('chats/'+cur).update({wp:FV.delete()}).then(()=>toast('Fon olib tashlandi')).catch(()=>toast('Ruxsat yo‘q'))}]]:[]),
  [IC('trash'),'Tarixni tozalash',async()=>{if(!confirm('Chat tarixi tozalansinmi?'))return;try{await wipeMsgs(cur);toast('Tarix tozalandi')}catch(e){toast('Tozalab bo‘lmadi')}}],
  [IC('trash'),'Chatni o‘chirish',()=>{SEL.clear();SEL.add(cur);el('#ldel').onclick()}]])};
 el('#msgs').addEventListener('load',()=>{if(Date.now()<STK){const m=el('#msgs');m.scrollTop=m.scrollHeight}},true);
 (function(){const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
  if(A&&A.addListener)A.addListener('backButton',()=>{if(layers().length)goBack();else if(A.exitApp)A.exitApp()})})();
+// ===== SOZLAMALAR (Telegram uslubi) =====
+(document.head.appendChild(document.createElement('style'))).textContent=`
+.noanim *,.noanim *::before,.noanim *::after{animation:none!important;transition:none!important}
+#msgs{font-size:calc(16px*var(--ts,1))}
+.sw{margin-left:auto;width:44px;height:26px;border-radius:13px;background:var(--ln);position:relative;flex:none;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--ac)}.sw.on::after{left:21px}
+.stt{font-size:20px;font-weight:700;flex:1;padding:0 6px}.stb{padding:6px 18px 4px;color:var(--ac);font-weight:600;font-size:14px}
+.chs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px}.chs button,#fbar button{padding:8px 14px;border-radius:18px;background:var(--in);color:var(--ink);font:inherit;font-size:14px;border:0}
+.chs button.a,#fbar button.a{background:var(--ac);color:#fff}
+#fbar{display:flex;gap:8px;overflow:auto;padding:6px 12px;flex:none}#fbar[hidden]{display:none}
+.fi{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--ln);background:var(--in);color:var(--ink);font:inherit}
+.fck{display:flex;gap:10px;align-items:center;padding:8px 16px;width:100%;color:var(--ink);font:inherit;background:none;border:0;text-align:left}
+.fck b{width:20px;height:20px;border-radius:6px;border:2px solid var(--mut);flex:none}.fck.on b{background:var(--ac);border-color:var(--ac)}
+.pgp{padding:12px 16px}.pgp .btn{width:100%}`;
+var ST=Object.assign({sound:1,prev:1,vib:1,anim:1,ts:100,saver:'off',adp:1,adv:0},JSON.parse(localStorage.getItem('mxx.st')||'{}'));
+var FL=JSON.parse(localStorage.getItem('mxx.fl')||'[]'),FOLD=null,BATL=1,BATC=false;
+function stSave(){localStorage.setItem('mxx.st',JSON.stringify(ST));stFx()}
+function stFx(){const low=ST.saver==='on'||(ST.saver==='auto'&&BATL<=.15&&!BATC);
+ document.documentElement.classList.toggle('noanim',!ST.anim||low);document.documentElement.style.setProperty('--ts',ST.ts/100)}
+try{navigator.getBattery&&navigator.getBattery().then(b=>{const u=()=>{BATL=b.level;BATC=b.charging;stFx()};u();b.onlevelchange=b.onchargingchange=u})}catch(e){}
+stFx();
+[ 'All|Hammasi|Все|Tümü|Todos|Alle|Tous|الكل|सभी|全部|すべて|전체|Todos|Tutti|Semua|همه|Барлығы|Ҳама|Hamısı|Усі','Create|Yaratish|Создать|Oluştur|Crear|Erstellen|Créer|إنشاء|बनाएं|创建|作成|만들기|Criar|Crea|Buat|ایجاد|Жасау|Эҷод кардан|Yarat|Створити','Choose wallpaper|Fon tanlash|Выбрать фон|Duvar kağıdı seç|Elegir fondo|Hintergrund wählen|Choisir un fond|اختيار خلفية|वॉलपेपर चुनें|选择壁纸|壁紙を選択|배경 선택|Escolher fundo|Scegli sfondo|Pilih wallpaper|انتخاب پس‌زمینه|Фонды таңдау|Интихоби фон|Fon seç|Обрати фон','Log out|Chiqish|Выход|Çıkış|Cerrar sesión|Abmelden|Déconnexion|تسجيل الخروج|लॉग आउट|退出登录|ログアウト|로그아웃|Sair|Esci|Keluar|خروج|Шығу|Баромадан|Çıxış|Вийти','Add account|Hisob qo‘shish|Добавить аккаунт|Hesap ekle|Añadir cuenta|Konto hinzufügen|Ajouter un compte|إضافة حساب|खाता जोड़ें|添加账号|アカウント追加|계정 추가|Adicionar conta|Aggiungi account|Tambah akun|افزودن حساب|Аккаунт қосу|Иловаи ҳисоб|Hesab əlavə et|Додати акаунт'].forEach(r=>{const n=r.split('|');n.forEach(x=>ROW.set(x,n))});
+// bildirishnoma sozlamalarini qo'llash
+{const _p=ping;ping=function(){if(ST.sound)_p();if(ST.vib&&navigator.vibrate)try{navigator.vibrate(40)}catch(e){}};
+ const _n=notify;notify=function(t,b){return _n(t,ST.prev?b:'')}}
+// jildlar bo'yicha filtr
+{const _r=renderList;renderList=function(){const all=CH,f=FOLD&&FL.find(x=>x.id===FOLD);if(f)CH=all.filter(c=>f.ids.includes(c.id));try{_r.apply(this,arguments)}finally{CH=all}}}
+function foldBar(){let b=el('#fbar');if(!b){b=document.createElement('div');b.id='fbar';el('#chv').prepend(b);b.onclick=e=>{const x=e.target.closest('button');if(!x)return;FOLD=x.dataset.f||null;foldBar();renderList()}}
+ b.hidden=!FL.length;if(FOLD&&!FL.some(x=>x.id===FOLD))FOLD=null;
+ b.innerHTML=[['','All'],...FL.map(f=>[f.id,f.name])].map(([i,n])=>`<button data-f="${i}"${(FOLD||'')===i?' class="a"':''}>${i?esc(n):n}</button>`).join('')}
+foldBar();
+const SVI=(p,c)=>`<i style="background:${c};color:#fff"><svg class=sic aria-hidden=true viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg></i>`;
+const SI={account:['<circle cx=12 cy=8 r=4 /><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>','#2d9cf0','Account','Email, username, bio'],
+ chat:['<path d="M21 12a8 8 0 0 1-12 7l-5 1 1-4a8 8 0 1 1 16-4Z"/>','#f59f00','Chat settings','Wallpaper, dark mode, animations'],
+ privacy:['<rect x=5 y=11 width=14 height=10 rx=2 /><path d="M8 11V8a4 4 0 0 1 8 0v3"/>','#40c057','Privacy and Security','Last seen, devices'],
+ notif:['<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>','#fa5252','Notifications','Sounds and previews'],
+ data:['<circle cx=12 cy=12 r=9 /><path d="M12 3v9h9"/>','#4c6ef5','Data and Storage','Storage usage, cache'],
+ folders:['<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>','#15aabf','Chat folders','Sort chats into folders'],
+ devices:['<rect x=4 y=5 width=16 height=11 rx=1 /><path d="M2 19h20"/>','#12b886','Devices','Manage linked devices'],
+ saver:['<rect x=3 y=8 width=15 height=8 rx=2 /><path d="M21 11v2"/>','#f76707','Power saving','Fewer animations on low battery'],
+ lang:['<circle cx=12 cy=12 r=9 /><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>','#9775fa','Language','']};
+function stHome(){const m=ME||{name:'...'};
+ return`<div class="pf"><span data-s="ava">${av(m,96)}</span><h2>${esc(m.name)}</h2><small>${m.username?'@'+esc(m.username):''}</small></div>
+ <div class="card"><div class="stb">Accounts</div><button class="il" data-s="accs">${av(m,40)}<span>${esc(m.name)}<small>${ACCS.length}/10</small></span></button></div>
+ <div class="card">${Object.keys(SI).map(k=>{const x=SI[k];return`<button class="il" data-s="x:${k}">${SVI(x[0],x[1])}<span>${x[2]}<small>${k==='lang'?LNM():x[3]}</small></span></button>`}).join('')}</div>`}
+const tgl=(k,t,on)=>`<button class="il" data-t="${k}"><span>${t}</span><b class="sw${on?' on':''}"></b></button>`;
+const chs=(k,arr,cur)=>`<div class="chs">${arr.map(([v,t])=>`<button data-o="${k}:${v}"${String(cur)===String(v)?' class="a"':''}>${t}</button>`).join('')}</div>`;
+const act=(a,t,c)=>`<button class="il${c||''}" data-a="${a}"><span>${t}</span></button>`;
+var SPK='';
+function chName(c){return c.type==='dm'?who(peer(c)).name:(c.name||'')}
+function stPage(k){if(k==='lang')return langPage();SPK=k;const v=el('#lg'),x=SI[k];let h='';
+ if(k==='account'){h=`<div class="card" style="margin-top:8px">${act('prof','Edit profile')}<div class="il"><span>Email<small>${esc(au.currentUser?.email||'')}</small></span></div><div class="il"><span>Username<small>${ME?.username?'@'+esc(ME.username):'—'}</small></span></div></div><div class="card">${act('add','Add account')}${act('out','Log out',' dg')}</div>`}
+ else if(k==='chat'){h=`<div class="card" style="margin-top:8px">${tgl('dark','Dark mode',TH==='dark')}${tgl('anim','Animations',ST.anim)}</div><div class="card"><div class="stb">Text size</div>${chs('ts',[[85,'85%'],[100,'100%'],[115,'115%'],[130,'130%']],ST.ts)}</div><div class="card">${act('wp','Choose wallpaper')}${localStorage.getItem('mxx.wpall')?act('wpx','Remove wallpaper'):''}</div>`}
+ else if(k==='privacy'){h=`<div class="card" style="margin-top:8px">${tgl('hide','Hide last seen and online',ME?.hide)}</div><div class="card">${act('dev','Devices')}</div>`}
+ else if(k==='notif'){h=`<div class="card" style="margin-top:8px">${act('perm','Notifications')}${tgl('sound','Sounds',ST.sound)}${tgl('prev','Message preview',ST.prev)}${tgl('vib','Vibration'.replace('Vibration','Vibration'),ST.vib)}</div>`}
+ else if(k==='data'){let n=0;try{for(const i in localStorage)n+=(localStorage[i]||'').length}catch(e){}
+  h=`<div class="card" style="margin-top:8px"><div class="il"><span>Storage used<small>${(n*2/1024).toFixed(0)} KB</small></span></div>${act('clr','Clear cache')}</div>`}
+ else if(k==='folders'){h=`<div class="card" style="margin-top:8px">${FL.map(f=>`<div class="il"><span>${esc(f.name)}<small>${f.ids.length}</small></span><button class="lnk" data-a="fdel" data-i="${f.id}">Delete</button></div>`).join('')}</div><div class="card"><div class="stb">New folder</div><div class="pgp"><input class="fi" id="fnm" maxlength="20" placeholder="Folder name"></div>${CH.map(c=>`<button class="fck" data-a="fck" data-i="${c.id}"><b></b><span>${esc(chName(c))}</span></button>`).join('')}<div class="pgp"><button class="btn" data-a="fnew">Create</button></div></div>`}
+ else if(k==='devices'){const ua=navigator.userAgent,br=/Edg/.test(ua)?'Edge':/OPR/.test(ua)?'Opera':/Firefox/.test(ua)?'Firefox':/Chrome/.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':'Browser',os=/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':/Windows/.test(ua)?'Windows':/Mac/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'';
+  h=`<div class="card" style="margin-top:8px"><div class="stb">This device</div><div class="il"><span>${br} · ${os}<small>${esc(au.currentUser?.email||'')}</small></span></div></div><div class="card">${act('out','Log out',' dg')}</div>`}
+ else if(k==='saver'){h=`<div class="card" style="margin-top:8px">${chs('saver',[['off','Off'],['auto','Auto'],['on','Always']],ST.saver)}<div class="il"><span><small>Fewer animations on low battery</small></span></div></div>`}
+ const sc=v.querySelector('#lgl')?.scrollTop||0,same=v.dataset.k===k&&!v.hidden;
+ v.innerHTML=`<div class="lgh"><button class="ib" data-lg="back" aria-label="Back"><svg class=sic aria-hidden=true><use href=#i-left></use></svg></button><span class="stt">${x[2]}</span></div><div id="lgl">${h}</div>`;
+ v.dataset.k=k;v.hidden=false;if(same)v.querySelector('#lgl').scrollTop=sc;langApply()}
+el('#lg').addEventListener('click',e=>{const t=e.target.closest('[data-t],[data-o],[data-a]');if(!t)return;
+ if(t.dataset.t){const k=t.dataset.t;if(k==='dark')togTheme();else if(k==='hide'){const v=!ME?.hide;db.doc('users/'+U).update({hide:v}).then(()=>{if(ME)ME.hide=v;stPage(SPK)}).catch(()=>toast('Could not save'))}else{ST[k]=ST[k]?0:1;stSave()}stPage(SPK)}
+ else if(t.dataset.o){const[k,v]=t.dataset.o.split(':');ST[k]=k==='ts'?+v:v;stSave();stPage(SPK)}
+ else{const a=t.dataset.a;
+  if(a==='prof'){el('#lg').hidden=true;profile()}else if(a==='add'){el('#lg').hidden=true;addAcc()}
+  else if(a==='out'){if(confirm('Log out?'))doLogout()}else if(a==='dev')stPage('devices')
+  else if(a==='perm')askNotif()
+  else if(a==='wp'){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);try{localStorage.setItem('mxx.wpall',c.toDataURL('image/jpeg',.72));wpApply();stPage('chat')}catch(x){toast('Too large')}};im.src=URL.createObjectURL(f)};i.click()}
+  else if(a==='wpx'){localStorage.removeItem('mxx.wpall');wpApply();stPage('chat')}
+  else if(a==='clr'){Object.keys(localStorage).filter(x=>x.startsWith('mxx.wp.')).forEach(x=>localStorage.removeItem(x));try{caches&&caches.keys().then(l=>l.forEach(c=>caches.delete(c)))}catch(x){}wpApply();stPage('data')}
+  else if(a==='fck')t.classList.toggle('on');
+  else if(a==='fdel'){FL=FL.filter(f=>f.id!==t.dataset.i);localStorage.setItem('mxx.fl',JSON.stringify(FL));foldBar();renderList();stPage('folders')}
+  else if(a==='fnew'){const n=el('#fnm').value.trim(),ids=[...document.querySelectorAll('#lg .fck.on')].map(x=>x.dataset.i);if(!n)return;FL.push({id:'f'+Date.now(),name:n,ids});localStorage.setItem('mxx.fl',JSON.stringify(FL));foldBar();renderList();stPage('folders')}}});
+
+// IIFE ichidagi funksiyalarni tashqi kod (renderMsgs, renderPage...) chaqira olishi uchun
+{const X={LNM,bki,chName,closeTop,favTog,finish,foldBar,gDraw,gEnd,gStart,goBack,langApply,langList,langPage,layers,lt,navSync,prep,stFx,stHome,stPage,stSave,unprep,wpApply,xmShow};for(const k in X)if(!(k in window))window[k]=X[k]}
+
 navSync();
 })();
 </script>
