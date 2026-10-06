@@ -41,7 +41,9 @@ jobs:
             convert sq.png -resize ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
           done
       - name: Versiya raqami
-        run: sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "1.1"/' android/app/build.gradle
       - name: Release build
         run: cd android && chmod +x gradlew && ./gradlew assembleRelease
       - name: Imzolash
@@ -61,4 +63,3 @@ jobs:
         with:
           name: mxx-app
           path: mxx-release.apk
-          
