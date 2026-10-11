@@ -16,6 +16,15 @@ jobs:
         run: |
           mkdir www
           rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' --exclude='www' --exclude='package*.json' --exclude='capacitor.config.json' ./ www/
+      - name: Firebase fayllarini ichiga joylash
+        run: |
+          B=https://www.gstatic.com/firebasejs/10.12.2
+          for f in firebase-app-compat.js firebase-auth-compat.js firebase-firestore-compat.js; do
+            curl -fsSL "$B/$f" -o "www/$f"
+          done
+          sed -i "s#$B/#./#g" www/index.html
+          grep -c "gstatic.com/firebasejs" www/index.html || true
+          ls -la www/firebase-*.js
       - run: npm install
       - name: Pluginlar (orqaga tugmasi va bildirishnoma)
         run: |
