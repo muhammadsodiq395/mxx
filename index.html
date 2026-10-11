@@ -594,6 +594,25 @@ aside .top,aside #nav{background:var(--sf)}
 #lgl{flex:1;overflow:auto}.lgr{display:flex;align-items:center;width:100%;padding:12px 18px;border:0;background:transparent;color:var(--ink);text-align:left;gap:12px;font:inherit;font-size:16px}
 .lgr small{display:block;color:var(--mut);font-size:13px}.lgr .ck{margin-left:auto;color:var(--ac);font-size:20px}
 #sdn{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;width:46px;height:46px;border-radius:50%;border:0;background:var(--sf);color:var(--mut);box-shadow:var(--sh);display:grid;place-items:center}#sdn[hidden]{display:none}
+/* ===== v6: planshet va kompyuter: chapda chatlar ro'yxati, o'ngda yozishma (Telegram Desktop kabi) ===== */
+@media(min-width:720px) and (min-height:480px){
+:root{--lw:clamp(300px,32vw,400px)}
+#app{display:grid;grid-template-columns:var(--lw) minmax(0,1fr);width:100%;max-width:none;margin:0;box-shadow:none;height:100dvh}
+aside,main{height:100%;width:auto;min-width:0}
+aside,#app.open aside{display:flex}
+main,#app.open main{display:flex}
+main{position:relative}
+#app #bk{display:none}
+.b{max-width:min(74%,560px)}
+#info,#amv,#upf{left:var(--lw);right:0;width:auto}
+#sv,#drw{right:auto;width:var(--lw)}
+}
+@media(min-width:900px) and (min-height:480px){
+#auth{inset:0;transform:none;width:auto;grid-template-columns:1.15fr 1fr;grid-template-rows:none;box-shadow:none}
+.brand{padding:56px}.brand h1{font-size:clamp(56px,8vw,104px)}.brand p{display:block}.brand ul{display:grid}
+.logo{width:68px;height:68px;font-size:38px;border-radius:20px;margin:0 0 22px}.bc{display:block}
+.fw{align-items:center;padding:24px}
+}
 </style>
 </head>
 <body>
@@ -1981,6 +2000,9 @@ el('#lg').addEventListener('click',e=>{const t=e.target.closest('[data-t],[data-
 
 navSync();
 })();
+</script>
+<script>
+document.addEventListener('keydown',e=>{if(e.key!=='Escape'||typeof cur==='undefined'||!cur||innerWidth<720)return;if(['#info','#sv','#amv','#upf','#mp','#mod','#lg','#drw','#emo','#menu','#cm','#xm','#ats'].some(s=>{const x=document.querySelector(s);return x&&!x.hidden}))return;const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&a.value)return;back()},true);
 </script>
 </body>
 </html>
